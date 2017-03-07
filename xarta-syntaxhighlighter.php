@@ -12,6 +12,7 @@
 
  /**
   * WARNING: THIS IS MY FIRST PLUG-IN ... VERY RUDIMENTARY/CRUDE; UNDER DEVELOPMENT
+  * ... and not got around to learning PHP yet so very basic.
   *
   * Purpose:
   * 1.) provide shortcodes to process and turn into <pre blah blah></pre> syntax
@@ -21,7 +22,7 @@
   *     ... a simple custom event bind to re-execute the highlighting
   *     ... to simplify ajax loading of code from GitHub
   *
-  * 2.) fetch raw file code from GitHub
+  * 2.) fetch raw file code from GitHub (or use other code in an attribute*)
   *
   * 3.) wrap output with other DIVS for use with other plug-ins
   *     Dependency: 
@@ -48,8 +49,8 @@ function github_get_url($atts)
     return  "$github_base_url$github_user/$repo_raw_file";
 }
 
-// GitHub shortcodes - load raw file to syntax highlight
-function github_shortcode( $atts ) 
+// GitHub shortcodes - get GitHub raw file contents
+function github_shortcode( $atts = []) 
 {
     // TODO
     //  - local caching
@@ -59,7 +60,7 @@ function github_shortcode( $atts )
 add_shortcode('github', 'github_shortcode');
 
 
-function cgithub_shortcode( $atts ) 
+function cgithub_shortcode( $atts = [] ) 
 {
     return  '<pre><div class="notjq">'. 
                 htmlspecialchars(github_shortcode($atts)) . 
@@ -68,7 +69,7 @@ function cgithub_shortcode( $atts )
 add_shortcode('cgithub', 'cgithub_shortcode');
 
 
-function xgithub_shortcode( $atts )
+function xgithub_shortcode( $atts = [])
 {
     $atts['outputcode'] = github_shortcode($atts);
     $atts['title'] = github_get_url($atts);
@@ -78,40 +79,60 @@ function xgithub_shortcode( $atts )
 add_shortcode('xgithub', 'xgithub_shortcode');
 
 
-function xxgithub_shortcode( $atts )
+function xsyntax_shortcode( $atts = [], $content = '' )
 {
-    $atts['lightbox'] = 'false';
-    return xgithub_shortcode( $atts );
+    $atts['outputcode'] = $content;
+    return xarta_highlight( $atts );
 }
-add_shortcode('xxgithub', 'xxgithub_shortcode');
+add_shortcode('xsyntax', 'xsyntax_shortcode');
 
 
 
 function xarta_highlight( $atts ) 
 {
+    // $options below requires that $atts have been massaged
     extract( attribute_massage( $atts ));
     
-    $colorboxID = trim(strval(uniqid()));
+    // options - either empty strings or key: 'value' pairs with dash-case keys
+    $options = $classname.$title.$firstline.$gutter.$autolinks.$highlight.$htmlscript.$smarttabs.$tabsize;
+      
+    $outputcode = x_squarebrackets_to_guid($outputcode); // prevent shortcodes in code
+                                                         // from being evaluated in do_shortcode()
+    $outputcode = fix_reference_issue($outputcode);      // TODO check if still necessary
 
-    $options = $classname.$firstline.$gutter.$autolinks;
-    
-    $outputcode = x_squarebrackets_to_guid($outputcode);
-    $outputcode = fix_reference_issue($outputcode);
-
-    $syntax = '<pre class="brush: \''.$lang.'\'; '.$options.' title: \''.$title.'\'; ">'.$outputcode.'</pre>';
-    $wrap = '<div class="xarta-code-style xarta-code-width xarta-code-buttons"><div id="wp_colorbox_'.$colorboxID.'">'.$syntax.'</div></div>';
-    $start = '<p style="clear:both;">...</p><p><span style="float:right;"> ';
-    $colorbox = do_shortcode($start . ' [wp_colorbox_media url="#wp_colorbox_'.$colorboxID.'" type="inline" hyperlink="" alt="CODE ZOOM"] ' . "</span></p>$wrap");
-  
-    $codeoutput = x_guid_to_squarebrackets($colorbox);
-    if(!empty($caption))
+    // my attribute $escapelt
+    if($escapelt === 'true')
     {
-        return $codeoutput.'<div class="xcaption">'.$caption.'</div>';
+        $outputcode = x_escape_lt($outputcode);
+    }
+
+    // my attribute $buttons
+    if($buttons === 'true')
+    {
+        $buttons = ' xarta-code-buttons';
     }
     else
     {
-        return $codeoutput;
+        $buttons = '';
     }
+
+    $syntax = '<pre class="brush: \''.$lang.'\'; '.$options.' ">'.$outputcode.'</pre>';
+    $wrap_classes = "xarta-code-style xarta-code-width $buttons";
+
+    // my attribute $lightbox
+    if($lightbox === 'true')
+    {
+        $colorboxID = trim(strval(uniqid()));
+        $wrap = '<div class="'.$wrap_classes.'"><div id="wp_colorbox_'.$colorboxID.'">'.$syntax.'</div></div>';
+        $start = '<p style="clear:both;">...</p><p><span style="float:right;"> ';
+        $codeoutput = do_shortcode($start . ' [wp_colorbox_media url="#wp_colorbox_'.$colorboxID.'" type="inline" hyperlink="" alt="CODE ZOOM"] ' . "</span></p>$wrap");
+    }
+    else
+    {
+        $codeoutput = '<div class"'.$wrap_classes.'">'.$syntax.'</div';
+    }
+  
+    return x_guid_to_squarebrackets($codeoutput);
 }
 
 

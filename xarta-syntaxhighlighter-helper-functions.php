@@ -1,12 +1,17 @@
 <?php
 
-
+// TODO: test if this is still the case (no longer using original WordPress plugin)
 function fix_reference_issue($input) {
     if (strpos($input,'/// <reference',0)===0) {
 	  return preg_replace('/^\/\/\/ <reference.+" \/>/', 
         "/* Dave has auto-removed visual studio code typings reference \n   as it upsets syntax highlighter evolved */ ", $input); }
     else {
 	  return $input; } 
+}
+
+function x_escape_lt( $input)
+{
+    return str_replace('<', '&lt;', $input);
 }
 
 // square bracket functions to prevent other shortcodes in the source file from being evaluated!
