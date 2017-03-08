@@ -1,0 +1,95 @@
+#colorbox .pf-content .printfriendly
+{
+	display: none;
+}
+a.wp-colorbox-inline 
+{
+    font-size: 3em;
+    text-decoration: none;
+}
+
+/*  for a "caption" under any syntax-highlighted-code instance */
+.xcaption {
+    left: 0;
+    font-family: 'verdana';
+    font-size: 0.8em;
+    padding: 5px;
+    margin-top: 0px;
+    margin-bottom: 60px;
+    background-color: rgba(10,10,10,1);
+    position: relative;
+    color: #fff;
+    z-index: 100;
+    -webkit-transition: all 300ms ease-out;
+    -moz-transition: all 300ms ease-out;
+    -o-transition: all 300ms ease-out;
+    -ms-transition: all 300ms ease-out;
+    transition: all 300ms ease-out;
+}
+.xcaption a {
+	color: #fff;
+}
+
+/*  xarta-syntaxhighlighter-site-footer.js creates div with this class */
+.syntaxhighlighter
+{
+	overflow-y: hidden !important;
+}
+
+
+/*  a convenient wrapping DIV (every single code-syntax-highlighting instance) */
+.xarta-syntax-highlight
+{
+	width: 50em;
+}
+
+.xarta-big-code-hide
+{
+	display:none;
+}
+
+/*  xarta-syntaxhighlighter-site-footer.js set to use .xarta-big-code as well as
+    .syntaxhighlighter class (custom class), as a default ... but I can override, per
+    individual code-syntax-highlighting
+*/
+.xarta-big-code
+{
+    margin: 0px !important;
+}
+
+@media only screen and (max-width:125em)
+{
+    .xarta-big-code
+    {
+        font-size: 0.8em !important;
+        font-size: 1.3vw !important;
+    }
+}
+
+@media only screen and (max-width:100em)
+{
+    .xarta-big-code
+    {
+        font-size: 0.6em !important;
+        font-size: 1.6vw !important;
+    }
+}
+
+@media only screen and (max-width:75em)
+{
+    .xarta-big-code
+    {
+        font-size: 0.4em !important;
+        font-size: 1.8vw !important;
+    }
+}
+
+@media only screen and (max-width:50em)
+{
+    .xarta-big-code
+    {
+        font-size: 0.2em !important;
+        font-size: 2vw !important;
+    }
+}
+

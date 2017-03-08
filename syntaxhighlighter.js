@@ -109,19 +109,21 @@
 	{
 		var codeDownloadTimeout;
 
-		$( "body" ).on( "moreCodeEvent", function( event, eventData ) 
+		$( "body" ).on( "moreCodeEventStarted", function( event, eventData ) 
 		{
 			clearTimeout(codeDownloadTimeout);
 			codeDownloadTimeout = setTimeout(function() 
 			{
 				(0, _domready2.default)(function () 
 				{
-	  			return _core2.default.highlight(dasherize.object(window.syntaxhighlighterConfig || {}));
+	  			var $highlightResult = _core2.default.highlight(dasherize.object(window.syntaxhighlighterConfig || {}));
+					$( "body" ).trigger( "moreCodeEventEnded", [ "BLAH" ] );
+					return $highlightResult;
 				});
 			}, 1000);
 		});
 
-		$( "body" ).trigger( "moreCodeEvent", [ "BLAH" ] ); // do on domready etc.  
+		$( "body" ).trigger( "moreCodeEventStarted", [ "BLAH" ] ); // do on domready etc.  
 	});
 	// ***********************************************************************************
 

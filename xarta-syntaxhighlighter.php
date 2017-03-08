@@ -25,7 +25,7 @@
   * 2.) fetch raw file code from GitHub (or use other code in an attribute*)
   *
   * 3.) wrap output with other DIVS for use with other plug-ins
-  *     Dependency: 
+  *     Requires two other plug-ins: 
   *         https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/
   *         https://en-gb.wordpress.org/plugins/forget-about-shortcode-buttons/
   *         ... and my own JavaScript related to those plug-ins
@@ -34,7 +34,10 @@
 
 require 'xarta-syntaxhighlighter-attribute-checks.php';
 require 'xarta-syntaxhighlighter-helper-functions.php';
-
+/**
+ * In site header-code (JavaScript):
+ * <script>syntaxhighlighterConfig = { className: 'xarta-big-code' };</script>
+ */
 
 function github_get_url($atts)
 {
@@ -90,9 +93,32 @@ add_shortcode('xsyntax', 'xsyntax_shortcode');
 
 function xarta_highlight( $atts ) 
 {
+    // unique id for every "instance"
+    $instance_id = 'xarta-id-'.trim(strval(uniqid())); // just a bit overcautious about trimmed string lol
+    $customClassName = 'xarta-big-code'; // also set in JavaScript header - syntaxhighlighter config
+
+    $atts_default = array('classname' => '');
+    $atts_classname = array_change_key_case( (array)$atts, CASE_LOWER);
+    $atts_classname = shortcode_atts( $atts_default, $atts_classname );
+
+    if(!empty($atts['classname']))
+    {
+        // over-ride custom classname with what was provided in shortcode attributes
+        // will override JavaScript-set classname (syntaxhighlighter config) too
+        $atts['classname'] = $atts['classname'] . " $instance_id";
+    }
+    else
+    {
+        $atts['classname'] = "$customClassName $instance_id";
+    }
+    
     // $options below requires that $atts have been massaged
     extract( attribute_massage( $atts ));
-    
+
+
+
+
+
     // options - either empty strings or key: 'value' pairs with dash-case keys
     $options = $classname.$title.$firstline.$gutter.$autolinks.$highlight.$htmlscript.$smarttabs.$tabsize;
       
@@ -109,15 +135,19 @@ function xarta_highlight( $atts )
     // my attribute $buttons
     if($buttons === 'true')
     {
-        $buttons = ' xarta-code-buttons';
+        $buttons = ' xarta-code-buttons ' . $instance_id;
     }
     else
     {
         $buttons = '';
     }
 
+    // xarta-syntaxhighlighter-site-footer.js will look for this special <pre>
     $syntax = '<pre class="brush: \''.$lang.'\'; '.$options.' ">'.$outputcode.'</pre>';
-    $wrap_classes = "xarta-code-style xarta-code-width $buttons";
+    
+    // nb: xarta-big-code class set in JavaScript syntaxhighlighterConfig default className
+    //     xarta-syntaxhighlighter-site-footer.js will include as a class in output div
+    $wrap_classes = "xarta-syntax-highlight $buttons"; // my wrapping div
 
     // my attribute $lightbox
     if($lightbox === 'true')
@@ -129,10 +159,10 @@ function xarta_highlight( $atts )
     }
     else
     {
-        $codeoutput = '<div class"'.$wrap_classes.'">'.$syntax.'</div';
+        $codeoutput = '<div class"'.$wrap_classes.'">'.$syntax.'</div>';
     }
   
-    return x_guid_to_squarebrackets($codeoutput);
+    return x_guid_to_squarebrackets($codeoutput).$caption;
 }
 
 

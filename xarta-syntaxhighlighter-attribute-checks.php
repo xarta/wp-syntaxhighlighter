@@ -72,7 +72,7 @@ function attribute_massage ($atts)
     $atts = true_false_sanitization($atts, 'buttons', 'buttons', $buttons_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
     $atts = true_false_sanitization($atts, 'lightbox', 'lightbox', $lightbox_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
 		
-    // compatible with WordPress attribute "light"
+    // compatible with standard WordPress Syntaxhighlighter plug-in attribute "light"
     // override "gutter"
     if ($atts['light'] === '1')
     {
@@ -92,7 +92,7 @@ function attribute_massage ($atts)
         // TODO (trim etc. maybe), check length etc.
         // ... escape?
         // TODO Any injection possibilities here?
-        $atts['caption'] = '<div class="xcaption">'.$caption.'</div>';
+        $atts['caption'] = '<div class="xcaption">'.$atts['caption'].'</div>';
     }
 
     if(!empty($atts['title']))
@@ -115,7 +115,9 @@ function attribute_massage ($atts)
     }
     else
     {
-        $atts['classname'] = $classname_default;
+        // default set anyway in site header with JavaScript
+        // syntaxhighlighterConfig ... className, so leave empty
+        // $atts['classname'] = $classname_default;
     }
 
 
