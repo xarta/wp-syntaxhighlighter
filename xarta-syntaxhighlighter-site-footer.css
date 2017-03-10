@@ -40,7 +40,7 @@ a.wp-colorbox-inline
 /*  a convenient wrapping DIV (every single code-syntax-highlighting instance) */
 .xarta-syntax-highlight
 {
-	width: 50em;
+	width: 100%;
 }
 
 .xarta-big-code-hide

@@ -1,5 +1,41 @@
 <?php
 
+/**
+ *  BEFORE looking at $atts array generally, the classname is scrutinised
+ *         as it might need modifying. If supplied, it overrides the default.
+ *         The default is also a custom name set in syntaxhighlighter config.
+ *         If empty in $atts, then the default is used.
+ *  HOWEVER ... still a xarta requirement to provide a unique ID per "instance"
+ */
+function css_classname_and_instance_id ($atts)
+{
+    $instanceID = xarta_get_instance_id();  // unique id for every "instance"
+    $customClassName = 'xarta-big-code';    // also set in JavaScript header - 
+                                            // syntaxhighlighter config
+
+    $atts = array_change_key_case( (array)$atts, CASE_LOWER);
+    if(!array_key_exists('classname', $atts)){ $atts['classname'] = ''; }
+
+    if(!empty($atts['classname']))
+    {
+        // over-ride custom classname with what was provided in shortcode attributes
+        // will override JavaScript-set classname (syntaxhighlighter config) too
+        $atts['classname'] = $atts['classname'] . " $instanceID";
+    }
+    else
+    {
+        $atts['classname'] = "$customClassName $instanceID";
+    }
+
+    $atts['instanceid'] = $instanceID; // appending to array
+ 
+    return $atts;   // only possibly added/modified "classname", and added "instanceid"
+                    // not touched anything else yet in the array
+                    // except made all keys lower-case
+}
+// *****************************
+
+
 const THIS_IS_MY_ATT = true;
 const NOT_MY_ATT = false;
 
@@ -53,16 +89,10 @@ function attribute_massage ($atts)
     );
 
     // normalize attribute keys, lowercase
-    $atts = array_change_key_case( (array)$atts, CASE_LOWER);
+    // $atts = array_change_key_case( (array)$atts, CASE_LOWER); // already done
+
     // supply missing attributes from $atts_default
     $atts = shortcode_atts( $atts_default, $atts );
-
-
-
-    if (!accept_lang($atts['lang']))
-    {
-        $atts['lang'] = $lang_default; 
-    }
   	
     $atts = true_false_sanitization($atts, 'gutter', 'gutter', $gutter_default, SYNTAX_DEFAULT_TRUE, NOT_MY_ATT);
     $atts = true_false_sanitization($atts, 'autolinks', 'auto-links', $autolinks_default, SYNTAX_DEFAULT_TRUE, NOT_MY_ATT);
@@ -71,7 +101,14 @@ function attribute_massage ($atts)
     $atts = true_false_sanitization($atts, 'escapelt', 'escape-lt', $escapelt_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
     $atts = true_false_sanitization($atts, 'buttons', 'buttons', $buttons_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
     $atts = true_false_sanitization($atts, 'lightbox', 'lightbox', $lightbox_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
-		
+
+
+    if (!accept_lang($atts['lang']))
+    {
+        $atts['lang'] = $lang_default; 
+    }
+
+
     // compatible with standard WordPress Syntaxhighlighter plug-in attribute "light"
     // override "gutter"
     if ($atts['light'] === '1')
@@ -93,6 +130,16 @@ function attribute_massage ($atts)
         // ... escape?
         // TODO Any injection possibilities here?
         $atts['caption'] = '<div class="xcaption">'.$atts['caption'].'</div>';
+    }
+    else
+    {
+        // I know, I know ... css vs content ... just seems
+        // convenient to do this here.  If no caption, then
+        // I want a line-break between the bottom of the code
+        // and succeeding content that's not stripped-out or mangled
+        // ... I think it's good to see the <br /> in source too;
+        // ... I think there's some semantic meaning of sorts
+        $atts['caption'] = '<br />';
     }
 
     if(!empty($atts['title']))
@@ -198,12 +245,14 @@ function true_false_sanitization($atts, $att_key, $att_dash_case, $my_default, $
 function accept_lang( $lang )
 {
   	// limit available brushes to these aliases, default to "code" 
- 	$langs = array('code', 'bash', 'c++', 'c#', 'php', 'sql', 'js', 'css');
+    // $xartaLangs is global  (at least to plugin)
+    global $xartaLangs;
+ 	
   	$lang_found = false;
 	  
-	for($i = 0; $i < count($langs); $i++)
+	for($i = 0; $i < count($xartaLangs); $i++)
 	{
-	  	if ( $langs[$i] === $lang)
+	  	if ( $xartaLangs[$i] === $lang)
 		{
 		 	$lang_found = true; 
 		  	break;

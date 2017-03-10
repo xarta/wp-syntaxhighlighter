@@ -103,7 +103,9 @@
 	// AFTER domready, so I can bring-in new code with ajax e.g. lots of different code
 	// samples pulled in from elsewhere e.g. github
 	// (I'm still green at JS and didn't want to get into CommonJS, Webpack and importing
-	// modules and all that at this time - I don't even use SASS or LESS etc. yet!!!)
+	// modules and all that at this time - I don't even use SASS or LESS etc. yet!!!
+	// - so ignoring the "highlight" function which seems ideal ... simply because I don't
+	// understand the API or how to get at it ... yet ... will update when I do understand)
 
 	jQuery(document).ready(function($) 
 	{
