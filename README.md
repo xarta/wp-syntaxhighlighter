@@ -55,18 +55,18 @@ outputcode= | '' *not normally used by the end-user: either a raw GitHub file is
 lang= | 'code' *default* e.g. *js*, *css* ... *I only use a subset, decided in an array in the plug-in*
 light= | '1'
 caption= | '*html string styled under the highlighted code like an image caption*'
-title | '*github raw file URL* or *as assigned*'
-autolinks | 'true' *see syntaxhighlighter config wiki*
-classname | '*over-rides default*' ... my default is *xarta-big-code*
-firstline | '1' *see syntaxhighlighter config wiki*
-gutter | 'true' *e.g. line number column*
-highlight | '' *see syntaxhighlighter config wiki*
-htmlscript | 'false' *see syntaxhighlighter config wiki*
-smarttabs | 'true' *see syntaxhighlighter config wiki*
-tabsize | '4' *see syntaxhighlighter config wiki*
-escapelt | 'true' *my option - for escaping &lt'*
-buttons | 'true' (default) for GitHub raw files, 'false' for [xsyntax ... ]*code*[/xsyntax] <br /> code (or aliases)
-lightbox | 'true' *ditto*
+title= | '*github raw file URL* or *as assigned*'
+autolinks= | 'true' *see syntaxhighlighter config wiki*
+classname= | '*over-rides default*' ... my default is *xarta-big-code*
+firstline= | '1' *see syntaxhighlighter config wiki*
+gutter= | 'true' *e.g. line number column*
+highlight= | '' *see syntaxhighlighter config wiki*
+htmlscript= | 'false' *see syntaxhighlighter config wiki*
+smarttabs= | 'true' *see syntaxhighlighter config wiki*
+tabsize= | '4' *see syntaxhighlighter config wiki*
+escapelt= | 'true' *my option - for escaping &lt'*
+buttons= | 'true' (default) for GitHub raw files, 'false' for [xsyntax ... ]*code*[/xsyntax] <br /> code (or aliases)
+lightbox= | 'true' *ditto*
 
 ## Example usage:
 [xgithub lang='php' raw='my-wp-code-snippets/master/github.php' caption='<em>this is an example</em>' ]
