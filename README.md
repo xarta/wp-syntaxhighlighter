@@ -17,17 +17,12 @@ Shortcode                   | Enlosed | Description
 --------------------------- | ------- | -----------
 [github raw='path to GitHub raw file'] | enclosed | URL constrained in the plug-in.
 [cgithub raw='ditto path'] | enclosed | Wrapper for github shortcode ... returns raw file escaped in &lt;pre&gt; tags.
-[xgithub ... options ... ] | enclosed | Wrapper for github shortcode, combining the file returned with options intended <br> for https://github.com/syntaxhighlighter/syntaxhighlighter. The output structured 
-according to my addtional options, invoking the lighbox shortcode if required, and <br> providing css classes & id in preparation for JavaScript client-side processing.
-[xgithub_ajax ... options] | enclosed | Encodes and outputs info to make an ajax request, json/base64 encoding 
-[xgithub ... options ...] shortcode.
-[xgithub_ajax_response_shortcode] | enclosed | Checks &#36;&#95;POST and decodes [xgithub ... options ...] to 
-recreate the shortcode for processing, for a response. nb: this shortcode must run 
-on a custom post type that only responds with WordPress **the_content**
-[xsyntax ... options ...]inline-code[/xsyntax] | open | exactly like the [xgithub] shortcode, except uses inline code rather 
-than a GitHub URL for raw files.
-[css ... options ...]inline-code[/css] | open | aliases e.g. css, c#, js, php and so on ... aliases for 
-[xsyntax ... options ...]inline-code[/xsyntax]
+[xgithub ... options ... ] | enclosed | Wrapper for github shortcode, combining the file returned with options intended <br /> for https://github.com/syntaxhighlighter/syntaxhighlighter. The output structured 
+according to my addtional options, invoking the lighbox shortcode if required, and <br /> providing css classes & id in preparation for JavaScript client-side processing.
+[xgithub_ajax ... options] | enclosed | Encodes and outputs info to make an ajax request, json/base64 encoding <br /> [xgithub ... options ...] shortcode.
+[xgithub_ajax_response_shortcode] | enclosed | Checks &#36;&#95;POST and decodes [xgithub ... options ...] to <br /> recreate the shortcode for processing, for a response. nb: this shortcode must run <br /> on a custom post type that only responds with WordPress **the_content**
+[xsyntax ... options ...]inline-code[/xsyntax] | open | exactly like the [xgithub] shortcode, except uses inline code rather <br /> than a GitHub URL for raw files.
+[css ... options ...]inline-code[/css] | open | aliases e.g. css, c#, js, php and so on ... aliases for <br />[xsyntax ... options ...]inline-code[/xsyntax]
  
  
  
