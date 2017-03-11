@@ -31,8 +31,10 @@ https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/ ).  I also keep th
 ---
  
  => I've built the js and css as per https://github.com/syntaxhighlighter/syntaxhighlighter
-    ... but just set-up a jQuery custom event in the build (for now) ...
-  // **********************************************************************************
+    	... but just set-up a jQuery custom event in the build (for now) ...  
+      
+      
+  	// **********************************************************************************
 	// Little addition to built js by David Bayliss March 2017; blog.xarta.co.uk
 	// I just wanted to be able to kick-off the highlighting stuff again at any time
 	// AFTER domready, so I can bring-in new code with ajax e.g. lots of different code
