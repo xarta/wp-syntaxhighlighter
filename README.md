@@ -3,7 +3,8 @@ My first WordPress plug-in attempt; a mash-up and extension for ajax-github-file
 
 https://blog.xarta.co.uk
 
-## WARNING       ... THIS IS STILL ALPHA - UNDER DEVELOPMENT - just motivated by wanting functionality on my own site  
+## WARNING       ... THIS IS STILL ALPHA - UNDER DEVELOPMENT
+### *just* motivated by wanting functionality on my own site  
 
 ## MAJOR ISSUES: 
 
@@ -14,8 +15,8 @@ https://blog.xarta.co.uk
 
 ## Adds shortcodes (in WordPress):
 
-Shortcode | Enlosed | Description
-----------| ------- | -----------
+Shortcode        | Enlosed | Description
+---------------- | ------- | -----------
 [github raw='path to GitHub raw file'] | enclosed | URL constrained in the plug-in.
 [cgithub raw='ditto path'] | enclosed | Wrapper for github shortcode ... returns raw file escaped in &lt;pre&gt; tags.
 [xgithub ... options ... ] | enclosed | Wrapper for github shortcode, combining the file returned with options intended for https://github.com/syntaxhighlighter/syntaxhighlighter. The output structured according to my addtional options, invoking the lighbox shortcode if required, and providing css classes & id in preparation for JavaScript client-side processing.
