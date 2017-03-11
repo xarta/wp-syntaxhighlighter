@@ -1,13 +1,23 @@
 # wp-syntaxhighlighter
-My first WordPress plug-in attempt; a mash-up and extension for ajax-github-file syntax highlighting
+My first **WordPress plug-in** attempt; a mash-up and extension for ajax-github-file syntax highlighting
 
 ## WARNING       ... THIS IS STILL ALPHA - UNDER DEVELOPMENT
-### *just* motivated by wanting functionality on my [own site](https://blog.xarta.co.uk)  
+### *just* motivated by wanting functionality on my [own site](https://blog.xarta.co.uk)
+
+* I take the css and js dist files from (*the classic*) https://github.com/syntaxhighlighter/syntaxhighlighter and "hack" the js file a little
+* I take a [colorbox WordPress plug-in](https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/)
+* I take a [CSS buttons plug-in](https://en-gb.wordpress.org/plugins/forget-about-shortcode-buttons/)
+* I make my own plug-in
+* Add my own JavaScript to the mix
+* Make a custom template for a single post (just to return *the_content*)
+* Add one of my shortcodes to a post based on that template (that responds to Ajax requests)
+
+And, Bob's your Uncle ... syntax highlighting of GitHub raw files retrieved optionally via Ajax request, or Syntax highlighting of code pasted into open shortcodes in the WordPress post, and with optional Width size, Fontsize, or fullscreen potentially Lightbox effect for the highlighted code.  TODO: button to toggle line-numbering on/off.
 
 ## MAJOR ISSUES: 
 
-* still in global scope (in WordPress) ... at least affects the "add media" button  
-* still have to manually add a post with a custom template for the ajax response shortcode, and a path to it   
+* still in global scope (in WordPress) ... at least affects (*as in disables*) the "add media" button in the post-editor
+* still have to manually add a post with a custom template for the ajax response shortcode, and a path to it *although the template's automated now*
 * still have to manually set other variables (and still uses some global variables) etc.  
 * no admin part yet    
 
