@@ -16,25 +16,21 @@ https://blog.xarta.co.uk
 
 Shortcode | Enlosed | Description
 ----------| ------- | -----------
-[github raw='path to GitHub raw file'] | enclosd | URL constrained in the plug-in
-[cgithub raw='ditto path'] | enclosed | Wrapper for github shortcode ... returns raw file escaped in <pre> tags.
+[github raw='path to GitHub raw file'] | enclosed | URL constrained in the plug-in.
+[cgithub raw='ditto path'] | enclosed | Wrapper for github shortcode ... returns raw file escaped in &lt;pre&gt; tags.
 [xgithub ... options ... ] | enclosed | Wrapper for github shortcode, combining the file returned with options intended for https://github.com/syntaxhighlighter/syntaxhighlighter. The output structured according to my addtional options, invoking the lighbox shortcode if required, and providing css classes & id in preparation for JavaScript client-side processing.
 [xgithub_ajax ... options] | enclosed | Encodes and outputs info to make an ajax request, json/base64 encoding [xgithub ... options ...] shortcode.
-[xgithub_ajax_response_shortcode] | enclosed | Checks $_POST and decodes [xgithub ... options ...] to recreate the shortcode for processing, for a response. nb: this shortcode must run on a custom post type that only responds with WordPress **the_content**
-                                            
-					    
-					    
-    [xsyntax ... options ...]inline-code[/xsyntax]	// exactly like the [xgithub] shortcode, except uses inline code rather than a GitHub URL for raw files.
-   
-    [css ... options ...]incline-code[/css]		// aliases e.g. css, c#, js, php and so on ... aliases for [xsyntax ... options ...]inline-code[/xsyntax]
+[xgithub_ajax_response_shortcode] | enclosed | Checks &#36;&#95;POST and decodes [xgithub ... options ...] to recreate the shortcode for processing, for a response. nb: this shortcode must run on a custom post type that only responds with WordPress **the_content**
+[xsyntax ... options ...]inline-code[/xsyntax] | open | exactly like the [xgithub] shortcode, except uses inline code rather than a GitHub URL for raw files.
+[css ... options ...]incline-code[/css] | open | aliases e.g. css, c#, js, php and so on ... aliases for [xsyntax ... options ...]inline-code[/xsyntax]
  
- </pre>
+ 
  
 As well as the https://github.com/syntaxhighlighter/syntaxhighlighter options, I add:
-* buttons="true" 	... to add width and font buttons
+* buttons="true"
 * lightbox="true" 	
 
-> Buttons tell my JavaScript to prepend some CSS buttons for width and font-size.  "lightbox" wraps the hightlighted output so that a magnifying glass button will open that output in a lightbox  (I just use the a colorbox plugin: https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/ ).  I also keep the ' light="1" ' option as the existing WordPress syntaxhighlighter evolved plug-in uses it.
+Buttons tell my JavaScript to prepend some CSS buttons for width and font-size.  "lightbox" wraps the hightlighted output so that a magnifying glass button will open that output in a lightbox  (I just use the a colorbox plugin: https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/ ).  I also keep the ' light="1" ' option as the existing WordPress syntaxhighlighter evolved plug-in uses it.
 
 ---
  
