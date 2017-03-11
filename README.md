@@ -69,7 +69,7 @@ buttons= | 'true' (default) for GitHub raw files, 'false' for [xsyntax ... ]*cod
 lightbox= | 'true' *ditto*
 
 ## Example usage:
-[xgithub lang='php' raw='my-wp-code-snippets/master/github.php' caption='<em>this is an example</em>' ]
+[xgithub lang='php' raw='my-wp-code-snippets/master/github.php' caption='&lt;em&gt;this is an example&lt;/em&gt;' ]
 
 TODO: *examples of the ajax stuff and other shortcodes*
 
