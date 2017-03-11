@@ -51,8 +51,7 @@ option | Example value or default or explanation
 ------ | ------------------------
 raw=   | 'my-wp-code-snippets/master/github.php'
 github_user= | 'davros1973'
-outputcode= | '' *not normally used by the end-user: either a raw GitHub file is <br />
-loaded in there, or content in open shortcodes, normally*
+outputcode= | '' *not normally used by the end-user: either a raw GitHub file is <br /> loaded in there, or content in open shortcodes, normally*
 lang= | 'code' *default* e.g. *js*, *css* ... *I only use a subset, decided in an array in the plug-in*
 light= | '1'
 caption= | '*html string styled under the highlighted code like an image caption*'
@@ -66,7 +65,7 @@ htmlscript | 'false' *see syntaxhighlighter config wiki*
 smarttabs | 'true' *see syntaxhighlighter config wiki*
 tabsize | '4' *see syntaxhighlighter config wiki*
 escapelt | 'true' *my option - for escaping &lt'*
-buttons | 'true' (default) for GitHub raw files, 'false' for [xsyntax ... ]*code*[/xsyntax] code (or aliases)
+buttons | 'true' (default) for GitHub raw files, 'false' for [xsyntax ... ]*code*[/xsyntax] <br /> code (or aliases)
 lightbox | 'true' *ditto*
 
 ## Example usage:
