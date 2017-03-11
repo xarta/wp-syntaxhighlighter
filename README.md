@@ -1,10 +1,8 @@
 # wp-syntaxhighlighter
 My first WordPress plug-in attempt; a mash-up and extension for ajax-github-file syntax highlighting
 
-https://blog.xarta.co.uk
-
 ## WARNING       ... THIS IS STILL ALPHA - UNDER DEVELOPMENT
-### *just* motivated by wanting functionality on my own site  
+### *just* motivated by wanting functionality on my [own site](https://blog.xarta.co.uk)  
 
 ## MAJOR ISSUES: 
 
@@ -15,15 +13,15 @@ https://blog.xarta.co.uk
 
 ## Adds shortcodes (in WordPress):
 
-Shortcode        | Enlosed | Description
----------------- | ------- | -----------
+Shortcode                   | Enlosed | Description
+--------------------------- | ------- | -----------
 [github raw='path to GitHub raw file'] | enclosed | URL constrained in the plug-in.
 [cgithub raw='ditto path'] | enclosed | Wrapper for github shortcode ... returns raw file escaped in &lt;pre&gt; tags.
 [xgithub ... options ... ] | enclosed | Wrapper for github shortcode, combining the file returned with options intended for https://github.com/syntaxhighlighter/syntaxhighlighter. The output structured according to my addtional options, invoking the lighbox shortcode if required, and providing css classes & id in preparation for JavaScript client-side processing.
 [xgithub_ajax ... options] | enclosed | Encodes and outputs info to make an ajax request, json/base64 encoding [xgithub ... options ...] shortcode.
 [xgithub_ajax_response_shortcode] | enclosed | Checks &#36;&#95;POST and decodes [xgithub ... options ...] to recreate the shortcode for processing, for a response. nb: this shortcode must run on a custom post type that only responds with WordPress **the_content**
 [xsyntax ... options ...]inline-code[/xsyntax] | open | exactly like the [xgithub] shortcode, except uses inline code rather than a GitHub URL for raw files.
-[css ... options ...]incline-code[/css] | open | aliases e.g. css, c#, js, php and so on ... aliases for [xsyntax ... options ...]inline-code[/xsyntax]
+[css ... options ...]inline-code[/css] | open | aliases e.g. css, c#, js, php and so on ... aliases for [xsyntax ... options ...]inline-code[/xsyntax]
  
  
  
