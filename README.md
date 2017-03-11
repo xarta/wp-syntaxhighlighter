@@ -25,11 +25,12 @@ Shortcode                   | Enlosed | Description
  
  
  
-As well as the https://github.com/syntaxhighlighter/syntaxhighlighter options, I add:
-* buttons="true"
-* lightbox="true" 	
+As well as the https://github.com/syntaxhighlighter/syntaxhighlighter/wiki/Configuration options that just get output for syntaxhighlighter.js to pick-up on, I add:
+* buttons="true"  *or "false"*
+* lightbox="true" *or "false"*
+* light = "1"&nbsp;&nbsp;*or "0"* This is for compatibility with the [existing WordPress Syntaxhighlighter Evolved plug-in](https://en-gb.wordpress.org/plugins/syntaxhighlighter/)
 
-Buttons tell my JavaScript to prepend some CSS buttons for width and font-size.  "lightbox" wraps the hightlighted output so that a magnifying glass button will open that output in a lightbox  (I just use the a colorbox plugin: https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/ ).  I also keep the ' light="1" ' option as the existing WordPress syntaxhighlighter evolved plug-in uses it.
+Buttons tell my JavaScript to prepend some [CSS buttons](https://en-gb.wordpress.org/plugins/forget-about-shortcode-buttons/) for width and font-size.  "lightbox" wraps the hightlighted output so that a magnifying glass button will open that output in a lightbox  [(I just use the a colorbox plugin.)](https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/)
 
 ---
  
