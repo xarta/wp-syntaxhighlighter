@@ -12,7 +12,7 @@
 
 /**
  * xarta-syntaxhighlighter-site-footer.js
- * part of WordPress plugin I'm making that "hacks" a few plug-ins to work together
+ * part of WordPress plugin I'm making that uses a few plug-ins to work together
  * along with a slightly "hacked" build of the classic syntaxhighlighter browser-JavaScript:
  * https://github.com/syntaxhighlighter/syntaxhighlighter
  * 
@@ -21,6 +21,8 @@
  *  Attributes/defaults for lightbox (colorbox)
  *  Controls for Width, Font-size, and eventually line-number toggeling
  *  (per highlighted instance)
+ *  Eventually, a strip-and-collapse comments button
+ *  Eventually, a strip-and-collapse lines-starting-with button (e.g. my clog function)
  *  Shortcodes for safe ajax loading of raw GitHub files to be highlighted
  */
 
@@ -28,88 +30,13 @@ console.log("**************************************************");
 console.log("* SCRIPT: xarta-syntaxhighlighter-site-footer.js *");
 console.log("**************************************************");
 
-// COMMON GLOBAL CONVENIENT CONSOLE-LOG OUTPUT WITH ERROR-LEVEL -------------------
-// I normally define / set in the site header. TODO - deployment script that strips
-// all this debug stuff and any other duplication out.
-if(typeof extraDebug !== "undefined" && 
-    extraDebug !== null)
-{
-    console.log("extraDebug variable undefined, defining and default to 1");
-    extraDebug = 1;
-}
-else
-{
-    console.log("extraDebug variable already defined");
-}
-
-if(typeof clog !== "undefined" && 
-    clog !== null)
-{
-    console.log("clog function already created");
-}
-else
-{
-    console.log("clog function not created: creating");
-    // create global function
-    window.clog = function(message, level)
-    {
-        if (extraDebug>=level)
-	    {
-		    console.log(message);
-	    }
-    }
-}
-// ------------------------------------------------------------------------------
-
-// My other global functions for my site:
-// TODO Factor-out to "global" script so no more duplication
-//      e.g. just raise an error if script not present, with instructions for inclusion
-
-if(typeof xarta_ajax !== "undefined" && 
-    xarta_ajax !== null)
-{
-    clog("xarta_ajax function already created", 1);
-}
-else
-{
-    clog("xarta_ajax function not created: creating", 1);
-    window.xarta_ajax =function (url, responseFunction, postString)
-    {
-        // TODO: ERROR HANDLING (assumption that successful)
-
-        clog("xarta_ajax",1);
-
-        var xhttp;
-
-        if (window.XMLHttpRequest)
-        {
-            xhttp = new XMLHttpRequest();
-        } else {
-            // code for IE6, IE5 (old example! leaving in for fun)
-            xhttp = new ActiveXObject("Microsoft.XMLHTTP"); 
-        }
-
-        xhttp.onreadystatechange = function() 
-        {
-            if (this.readyState == 4 && this.status == 200) 
-            {
-                responseFunction(this);
-            }
-            else
-            {
-                // What? Yeah? What you gonna do about it?
-            }
-        };
-        clog("url="+url+"?random="+Math.random(),1);
-        clog("postString="+postString,1);
-        xhttp.open("POST", url, true);
-        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        xhttp.send(postString);
-    }
-}
-// ------------------------------------------------------------------------------
-
-
+// GLOBAL VARS/FUNCTIONS IN "xarta-global-functions.js"
+// VARS:
+//      extraDebug
+//
+// FUNCTIONS:
+//      clog(msg_str, extra_debug_level);
+//      xarta_ajax(url, responseFunction, postString);
 
 
 // IMPORTANT: although using document-ready here ... remember that class names / divs
@@ -178,10 +105,18 @@ jQuery(document).ready(function($) {
         // TODO another (single) button ... a toggle for line-numbering in the output
         //      it would involve reloading that instance's code & rehighlighting etc.
 
-        $(xartaCodeButtons+xartaInstanceID).prepend(myprependFontBtns);
-        $(xartaCodeButtons+xartaInstanceID).prepend(myprependWidthBtns);
-        $(xartaCodeButtons+xartaInstanceID).removeClass(xartaCodeButtons); // render once only
+        if($(xartaInstanceID+'.increase-font').length<1)
+        {
+            $(xartaCodeButtons+xartaInstanceID).prepend(myprependFontBtns);
+        }
+        if($(xartaInstanceID+'.inflate-code').length<1)
+        {
+            $(xartaCodeButtons+xartaInstanceID).prepend(myprependWidthBtns);
+        }
+        
+        $(xartaInstanceID).removeClass(xartaCodeButtons); // render once only
 
+        
         codeButtonLabelChange(xartaWidthControl, xartaInstanceID); // do after render
 
 
@@ -335,6 +270,8 @@ jQuery(document).ready(function($) {
     // Currently: none will.
     $( "body" ).on( "moreCodeEventEnded", function( event, eventData ) 
     {
+        clog("moreCodeEventEnded: "+eventData, 1);
+
         loopInstanceIDs(function(xartaInstanceID)
         {
             // (inner) callback passing xartaInstanceID
@@ -482,6 +419,10 @@ jQuery(document).ready(function($) {
             // ... so targetDiv = xartaAjaxTarget+xartaInstanceID
             // ... and url & postString are extracted using jQuery attr
 
+            // *** IMPORTANT *** "xarta-id-XXXXXXXXXXXXX" used for targetDiv
+            // is DIFFERENT to a new unique id that will be part of the responseText
+            // that will REPLACE any trace of the unique id in targetDiv ...
+            // targetDiv html is replaced (not innerHTML).
 
             // (inner) callback passing xartaAjaxTarget+xartaInstanceID, url, postString
             // that loopInstanceIDs finds, per loop:
@@ -503,15 +444,27 @@ jQuery(document).ready(function($) {
         // assign "this" as "passthis" in my global xarta_ajax() function
         function responseFunction(passthis)
         {
-            $(targetDiv).html(passthis.responseText);
+            var tmpResponseText = passthis.responseText;
+            $(targetDiv).html(tmpResponseText);
+            // THIS WILL BRING IN NEW INSTANCEID - DIFFERENT TO THE ONE IN TARGETDIV
             
             // little "hack" ...
             // added event in built syntaxhighlighter.js to start highlighting
-            // TODO look into using properly so can use proper "highlight" function (API)
-            // ...  although ... I do like the "decoupling" aspect of this ... problem
-            //      is that the highlighting script will look at all the syntaxhighlighter
-            //      classes it finds on the page rather than a targeted instance
-            $( "body" ).trigger( "moreCodeEventStarted", [ "NO DATA YET"] );
+            // ... although really should be "requiring"'ing the module and using
+            // ... the API ... but quite like this simple "hack" with even decoupling
+            $(function() {
+                // Handler for .ready() called.
+                clog("tmpResponseText="+tmpResponseText,3);
+                // FIND THE NEW INSTANCEID OF THE (AJAX) ELEMENT TO BE HIGHLIGHTED
+                var startID = tmpResponseText.indexOf("xarta-id-");
+                clog("startID="+startID,1);
+                var id = '#'+ tmpResponseText.substr(startID,22);
+                clog("ID="+id,1);
+
+                clog($(id).get(),1);
+                $( "body" ).trigger( "moreCodeEventStarted", [ $(id).get() ] );           
+            });
+            
 
             // and bind the body "moreCodeEventEnded" event to continue
             // The process:
@@ -525,39 +478,6 @@ jQuery(document).ready(function($) {
         // my global xarta_ajax function
         xarta_ajax(url, responseFunction, postString);
     }
-
-
-
-
-    // *******************************************************************************************
-    // MESSING-ABOUT BIT ... PROBABLY NOT WORKING IN ANY MEANINGFUL SENSE ------------------------
-    
-    // On my ajax test post (div id #ajax-target )
-    // https://blog.xarta.co.uk/2017/03/test-ajax-syntaxhighlighter/#wp_colorbox_58bfdceb58e7d
-    $("#ajax_test_btn").click(function() {
-        clog("ajax_test_xgithub()",1);
-        //var url = "https://blog.xarta.co.uk/2017/03/httpsraw-githubusercontent-comdavros1973my-wp-code-snippetsmasterxgithub-php/";
-        var url = $("#ajax_test_form :input[name='url']")[0].value;
-        if(url === '')
-        {
-            url = $("#ajax_test_form :input[name='url']").attr('placeholder');
-        }
-
-        var post = $("#ajax_test_form :input[name='post']")[0].value;
-        if( post === '')
-        {
-            post = $("#ajax_test_form :input[name='post']").attr('placeholder');
-        }
-
-
-
-        var post2 = [{ name: "first", value: "Rick" },{ name: "last", value: "Astley" },{ name: "job", value: "Rock Star" }];
-        
-        $("#ajax_test_form :input[name='post']")[0].value = $.param(post2);
-
-        
-        xgithub_ajax_post_load_in("#ajax-target",url, $.param(post2));
-    });
 
 
 }); // end jQuery document ready

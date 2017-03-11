@@ -98,34 +98,45 @@
 	}
 	
 	// **********************************************************************************
-	// Little addition to built js by David Bayliss March 2017
+	// Little addition to built js by David Bayliss March 2017; blog.xarta.co.uk
 	// I just wanted to be able to kick-off the highlighting stuff again at any time
 	// AFTER domready, so I can bring-in new code with ajax e.g. lots of different code
 	// samples pulled in from elsewhere e.g. github
 	// (I'm still green at JS and didn't want to get into CommonJS, Webpack and importing
 	// modules and all that at this time - I don't even use SASS or LESS etc. yet!!!
-	// - so ignoring the "highlight" function which seems ideal ... simply because I don't
-	// understand the API or how to get at it ... yet ... will update when I do understand)
+	// - so ignoring the "default" export / API (for now), breaking encapsulation/portability
+	// - although introducing event decoupling
 
 	jQuery(document).ready(function($) 
 	{
-		var codeDownloadTimeout;
-
-		$( "body" ).on( "moreCodeEventStarted", function( event, eventData ) 
-		{
-			clearTimeout(codeDownloadTimeout);
-			codeDownloadTimeout = setTimeout(function() 
+			//var codeDownloadTimeout;
+		
+			/**
+			 * expecting eventData to be '', or eventData[0] to be native element(s)
+						e.g. $( "body" ).trigger( "moreCodeEventStarted", [ $(id).get() ] ); 
+			... 	where id is of the form: '#xarta-id-xxxxxxxxxxxxx' - unique element id
+			... 	and $ is jQuery alias ... so can now use targeting an Ajax-loaded-element!
+			*/
+		
+			$( "body" ).on( "moreCodeEventStarted", function( event, eventData ) 
 			{
-				(0, _domready2.default)(function () 
-				{
-	  			var $highlightResult = _core2.default.highlight(dasherize.object(window.syntaxhighlighterConfig || {}));
-					$( "body" ).trigger( "moreCodeEventEnded", [ "BLAH" ] );
-					return $highlightResult;
-				});
-			}, 1000);
-		});
+						console.log("MORE CODE EVENT STARTED, eventData[0]="+eventData[0]);
+					//clearTimeout(codeDownloadTimeout);
+					//codeDownloadTimeout = setTimeout(function() 
+					//{
+						(0, _domready2.default)(function () 
+						{
+								var $highlightResult = _core2.default.highlight(dasherize.object(window.syntaxhighlighterConfig || {}), eventData[0]);
+								$( "body" ).trigger( "moreCodeEventEnded", eventData[0] );
+								return $highlightResult;
+						});
+					//}, 250);
+			});
 
-		$( "body" ).trigger( "moreCodeEventStarted", [ "BLAH" ] ); // do on domready etc.  
+			// Once the DOM is loaded, trigger this event, setting element to null
+			// so highlight will do it's thing for ALL elements (with syntaxhighlighter class)
+			var dom_element = '';
+			$( "body" ).trigger( "moreCodeEventStarted", [ dom_element ] ); // do on domready etc.  
 	});
 	// ***********************************************************************************
 

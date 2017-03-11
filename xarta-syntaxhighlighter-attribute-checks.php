@@ -91,7 +91,7 @@ function attribute_massage ($atts)
     // normalize attribute keys, lowercase
     // $atts = array_change_key_case( (array)$atts, CASE_LOWER); // already done
 
-    // supply missing attributes from $atts_default
+    // supply missing attributes from $atts_default (and limit to atts_default)
     $atts = shortcode_atts( $atts_default, $atts );
   	
     $atts = true_false_sanitization($atts, 'gutter', 'gutter', $gutter_default, SYNTAX_DEFAULT_TRUE, NOT_MY_ATT);

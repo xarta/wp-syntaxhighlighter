@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Xarta Syntaxhighlighter
  * Plugin URI: https://blog.xarta.co.uk
- * Description: WARNING: TURNS OFF wpautop !!!  Simple WordPress ajax implementation of https://github.com/syntaxhighlighter/syntaxhighlighter/wiki
+ * Description: Simple WordPress ajax implementation of https://github.com/syntaxhighlighter/syntaxhighlighter/wiki
  * Version: 0.0.0
  * Author: David Bayliss
  * Author URI: https://blog.xarta.co.uk
@@ -41,7 +41,6 @@
         //           Should I set limits to $_POST & data?  *
         //         WordPress standard plugin stuff ...      *
         //         ABSPATH thingy?                          *
-        //         Script enqueing                          *
         //         Encapsulate somehow ... OOP / Class?     *
         //         *** CURRENTLY GLOBAL SPACE ***           *
         //         Standard security practice?              *
@@ -50,6 +49,45 @@
 
 require 'xarta-syntaxhighlighter-attribute-checks.php';
 require 'xarta-syntaxhighlighter-helper-functions.php';
+
+
+function xarta_load_scripts($hook) {
+ 
+    // create my own version codes
+    $xarta_global_js_ver  = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-global-functions.js' ));
+    $syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'theme.css' ));
+    $x_syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'x_syntaxhighlighter_css' ));
+     
+    // 
+    wp_register_script( 'xarta_global_js', plugins_url( 'xarta-global-functions.js', __FILE__ ), array(), $xarta_global_js_ver );
+    wp_register_script('xarta_syntaxhighlighter_site_footer', plugins_url('xarta-syntaxhighlighter-site-footer.js', __FILE__ ), array('syntaxhighlighter'), true );
+    wp_register_script('syntaxhighlighter', plugins_url( 'syntaxhighlighter.js', __FILE__ ), array('xarta_global_js'));
+
+    wp_register_style( 'syntaxhighlighter_css',    plugins_url( 'theme.css',    __FILE__ ), array(),   $syntax_theme_css_ver, 'all' );
+    wp_register_style( 'x_syntaxhighlighter_css',    plugins_url( 'xarta-syntaxhighlighter-site-footer.css',    __FILE__ ), array(syntaxhighlighter_css),   $x_syntax_theme_css_ver, 'all' );
+    
+    wp_enqueue_script( 'xarta_global_js' );   
+
+    // make sure single-post-page thingy template exists that only provides 'the_content'
+    // for me to run the ajax shortcode on to handle $_POST
+    xarta_setup_syntax_ajax_single_template();
+
+    //xarta_setup_syntax_ajax_post();
+
+}
+add_action('wp_enqueue_scripts', 'xarta_load_scripts');
+
+
+
+function xarta_enqueue_syntax_scripts()
+{
+    wp_enqueue_style ( 'syntaxhighlighter_css' );
+    wp_enqueue_style ( 'x_syntaxhighlighter_css' );
+    wp_enqueue_script( 'xarta_syntaxhighlighter_site_footer' );
+    wp_enqueue_script( 'syntaxhighlighter' );
+}
+add_action('x_enqueue_syntax_scripts', xarta_enqueue_syntax_scripts);
+
 
 $xartaLangs = array('code', 'bash', 'c++', 'c#', 'php', 'sql', 'js', 'css', 'xml');
 /**
@@ -242,6 +280,8 @@ function xgithub_ajax_shortcode( $atts = [])
     //echo "Debug. This is \$atts array before encoding:<br /><br />";
     //printArray($atts);
 
+    do_action('x_enqueue_syntax_scripts');
+
     $instance_id = xarta_get_instance_id();
     $xartaAjaxCssClass = 'xarta-target-ajax';
 
@@ -330,6 +370,8 @@ function xarta_highlight( $atts )
     //echo "Debug, xarta_highlight, \$atts array:<br /><br />";
     //printArray($atts);
 
+    do_action('x_enqueue_syntax_scripts');
+
     $atts = css_classname_and_instance_id($atts);
     $instanceID = $atts['instanceid'];
 
@@ -360,7 +402,7 @@ function xarta_highlight( $atts )
     }
 
     // xarta-syntaxhighlighter-site-footer.js will look for this special <pre>
-    $syntax = '<pre class="brush: \''.$lang.'\'; '.$options.' ">'.$outputcode.'</pre>';
+    $syntax = '<pre id="'.$instanceID.'" class="brush: \''.$lang.'\'; '.$options.' ">'.$outputcode.'</pre>';
     
     // nb: xarta-big-code class set in JavaScript syntaxhighlighterConfig default className
     //     xarta-syntaxhighlighter-site-footer.js will include as a class in output div
