@@ -38,9 +38,41 @@ Shortcode                   | Enlosed | Description
 As well as the https://github.com/syntaxhighlighter/syntaxhighlighter/wiki/Configuration options that just get output for syntaxhighlighter.js to pick-up on, I add:
 * buttons="true"  *or "false"*
 * lightbox="true" *or "false"*
+* caption="like an image caption"
 * light = "1"&nbsp;&nbsp;*or "0"* This is for compatibility with the [existing WordPress Syntaxhighlighter Evolved plug-in](https://en-gb.wordpress.org/plugins/syntaxhighlighter/)
 
-Buttons tell my JavaScript to prepend some [CSS buttons](https://en-gb.wordpress.org/plugins/forget-about-shortcode-buttons/) for width and font-size.  "lightbox" wraps the hightlighted output so that a magnifying glass button will open that output in a lightbox  [(I just use the a colorbox plugin.)](https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/)
+Buttons tell my JavaScript to prepend some [CSS buttons](https://en-gb.wordpress.org/plugins/forget-about-shortcode-buttons/) for width and font-size.  "lightbox" wraps the hightlighted output so that a magnifying glass button will open that output in a lightbox  [(I just use the a colorbox plugin.)](https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/) If 'caption' is non-empty it get's output by the plug-in immediately after the highlighted code with a css class styled like a "caption".
+
+**note** my shortcode options are all of the form *something='blah'* **where** *something* is **not** *dash-case*. However my plug-in code translates options as required to dash-case as expected by syntaxhighlighter.js.
+
+## My superset of options *with examples*
+
+option | Example value or default or explanation
+------ | ------------------------
+raw=   | 'my-wp-code-snippets/master/github.php'
+github_user= | 'davros1973'
+outputcode= | '' *not normally used by the end-user: either a raw GitHub file is <br />
+loaded in there, or content in open shortcodes, normally*
+lang= | 'code' *default* e.g. *js*, *css* ... *I only use a subset, decided in an array in the plug-in*
+light= | '1'
+caption= | '*html string styled under the highlighted code like an image caption*'
+title | '*github raw file URL* or *as assigned*'
+autolinks | 'true' *see syntaxhighlighter config wiki*
+classname | '*over-rides default*' ... my default is *xarta-big-code*
+firstline | '1' *see syntaxhighlighter config wiki*
+gutter | 'true' *e.g. line number column*
+highlight | '' *see syntaxhighlighter config wiki*
+htmlscript | 'false' *see syntaxhighlighter config wiki*
+smarttabs | 'true' *see syntaxhighlighter config wiki*
+tabsize | '4' *see syntaxhighlighter config wiki*
+escapelt | 'true' *my option - for escaping &lt'*
+buttons | 'true' (default) for GitHub raw files, 'false' for [xsyntax ... ]*code*[/xsyntax] code (or aliases)
+lightbox | 'true' *ditto*
+
+## Example usage:
+[xgithub lang='php' raw='my-wp-code-snippets/master/github.php' caption='<em>this is an example</em>' ]
+
+TODO: *examples of the ajax stuff and other shortcodes*
 
 ---
  
