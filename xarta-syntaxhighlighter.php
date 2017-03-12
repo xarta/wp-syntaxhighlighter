@@ -201,13 +201,27 @@ function xarta_remove_xprotect_pre_tags($code_content)
     $code_content = preg_replace( $searchString, "$2", $code_content );
     */
 
+
+
     // new method ... changing xarta_before_the_content_normal_filters
     //                to make </pre> more identifable ... and just replace
     //                xprotect class <pre>, and identifiable </pre> here with ''
 
-    $code_content = str_replace("</p>\n<pre class=\"xprotect\">", '', $code_content);
-    $code_content = str_replace("</pre>\n<p><!-- end xprotect -->", '', $code_content);
-    //$content = str_replace('</pre><!-- end xprotect -->', '', $content);
+    
+    if (strpos($code_content, "</p>\n<pre class=\"xprotect\">") !== FALSE)
+    {
+        // wpautop() on:
+        $code_content = str_replace("</p>\n<pre class=\"xprotect\">", '', $code_content);
+        $code_content = str_replace("</pre>\n<p><!-- end xprotect -->", '', $code_content);
+    }
+    else
+    {
+        // wpautop() off:
+        $code_content = str_replace("<pre class=\"xprotect\">", '', $code_content);
+        $code_content = str_replace("</pre><!-- end xprotect -->", '', $code_content);
+    }
+
+
 
     return $code_content;
 }
