@@ -62,6 +62,7 @@ function attribute_massage ($atts)
     $escapelt_default = 'true';
     $buttons_default = 'true';
     $lightbox_default = 'true';
+    $testmode_default = 'false';
 
 
     // for xarta_highlight function
@@ -85,7 +86,8 @@ function attribute_massage ($atts)
             'tabsize' => $tabsize_default,
             'escapelt' => $escapelt_default,
             'buttons' => $buttons_default,
-            'lightbox' => $lightbox_default
+            'lightbox' => $lightbox_default,
+            'testmode' => $testmode_default
     );
 
     // normalize attribute keys, lowercase
@@ -101,6 +103,7 @@ function attribute_massage ($atts)
     $atts = true_false_sanitization($atts, 'escapelt', 'escape-lt', $escapelt_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
     $atts = true_false_sanitization($atts, 'buttons', 'buttons', $buttons_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
     $atts = true_false_sanitization($atts, 'lightbox', 'lightbox', $lightbox_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
+    $atts = true_false_sanitization($atts, 'testmode', 'testmode', $testmode_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
 
 
     if (!accept_lang($atts['lang']))

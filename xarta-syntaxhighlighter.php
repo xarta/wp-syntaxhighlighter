@@ -169,7 +169,7 @@ function xarta_before_the_content_normal_filters($content)
             // more than once, successively (have to look at occurances etc.)
             // and computationally gets expensive.  This is a compromise.
             $content = preg_replace( $searchString, $replaceString , $content );
-            $content = str_replace('[/'.$searchLang.']', '</pre>[/'.$searchLang.']', $content);
+            $content = str_replace('[/'.$searchLang.']', '</pre><!-- end xprotect -->[/'.$searchLang.']', $content);
         }
         //break;
     }
@@ -185,6 +185,12 @@ add_filter('the_content', 'xarta_before_the_content_normal_filters', 4); // high
 
 function xarta_remove_xprotect_pre_tags($code_content)
 {
+
+    /*
+    OLD METHOD ... using preg_replace: too expensive if large $code_content
+    ... discovered it broke without increasing pcre.backtrack_limit
+    ... e.g. ... ini_set('pcre.backtrack_limit', 99999999999);
+
     // https://regex101.com/
 
     // / (<pre class="xprotect">)((?s:.)*)(<\/pre>) /g etc.
@@ -193,6 +199,15 @@ function xarta_remove_xprotect_pre_tags($code_content)
 
     $searchString = '/((?:<\/p>\s)<pre class="xprotect">)((?s:.)*)(<\/pre>)(?:\s<p>)/';
     $code_content = preg_replace( $searchString, "$2", $code_content );
+    */
+
+    // new method ... changing xarta_before_the_content_normal_filters
+    //                to make </pre> more identifable ... and just replace
+    //                xprotect class <pre>, and identifiable </pre> here with ''
+
+    $code_content = str_replace("</p>\n<pre class=\"xprotect\">", '', $code_content);
+    $code_content = str_replace("</pre>\n<p><!-- end xprotect -->", '', $code_content);
+    //$content = str_replace('</pre><!-- end xprotect -->', '', $content);
 
     return $code_content;
 }
@@ -340,6 +355,7 @@ function xsyntax_shortcode( $atts = [], $content = '' )
     // for this shortcode (and aliases), we get the code inbetween shortcode tags
     // e.g. $content.  But xarta_highlight looks for array member 'outputcode'
     $atts['outputcode'] = xarta_remove_xprotect_pre_tags($content);
+    //$atts['outputcode'] = $content;
     return xarta_highlight( $atts );
 }                                              //               *****************
 add_shortcode('xsyntax', 'xsyntax_shortcode'); //            <<<====== xsyntax *
@@ -380,7 +396,9 @@ function xarta_highlight( $atts )
 
     // options - either empty strings or key: 'value' pairs with dash-case keys
     $options = $classname.$title.$firstline.$gutter.$autolinks.$highlight.$htmlscript.$smarttabs.$tabsize;
-      
+    
+    $testoutput = $outputcode; // capture before anything done to it
+
     $outputcode = x_squarebrackets_to_guid($outputcode); // prevent shortcodes in code
                                                          // from being evaluated in do_shortcode()
     $outputcode = fix_reference_issue($outputcode);      // TODO check if still necessary
@@ -415,6 +433,10 @@ function xarta_highlight( $atts )
         $wrap = '<div class="'.$wrap_classes.'"><div id="wp_colorbox_'.$colorboxID.'">'.$syntax.'</div></div>';
         $start = '<p style="clear:both;">...</p><p><span style="float:right;"> ';
         $codeoutput = do_shortcode($start . ' [wp_colorbox_media url="#wp_colorbox_'.$colorboxID.'" type="inline" hyperlink="" alt="CODE ZOOM"] ' . "</span></p>$wrap");
+    }
+    else if($testmode === 'true')
+    {
+        $codeoutput = '<pre>'.$testoutput.'</pre>';
     }
     else
     {
