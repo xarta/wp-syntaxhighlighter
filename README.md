@@ -69,6 +69,8 @@ buttons= | 'true' (default) for GitHub raw files, 'false' for [xsyntax ... ]*cod
 lightbox= | 'true' *ditto*
 
 ## Example usage:
+
+*Assuming GitHub domain for user raw files, plus default GitHub username, already hard-programmed into plug-in*
 [xgithub lang='php' raw='my-wp-code-snippets/master/github.php' caption='&lt;em&gt;this is an example&lt;/em&gt;' ]
 
 TODO: *examples of the ajax stuff and other shortcodes*
