@@ -8,7 +8,7 @@ My first **WordPress plug-in** attempt; a mash-up and extension for ajax-github-
 * I take a [colorbox WordPress plug-in](https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/)
 * I take a [CSS buttons plug-in](https://en-gb.wordpress.org/plugins/forget-about-shortcode-buttons/)
 * I make my own plug-in
-* Add my own JavaScript to the mix
+* Add my own JavaScript to the mix *once I learn how to use webpack / commonJS / modules etc. I won't need to "hack" the syntaxhighlighter.js dist file anymore*
 * Make a custom template for a single post (just to return *the_content*)
 * Add one of my shortcodes to a post based on that template (that responds to Ajax requests)
 
