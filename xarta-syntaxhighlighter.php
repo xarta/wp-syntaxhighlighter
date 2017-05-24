@@ -148,31 +148,34 @@ function xarta_before_the_content_normal_filters($content)
         }
     }
 
-
-
-    global $xartaLangs;
-    $xartaCodesToCheck = $xartaLangs;
-    array_push($xartaCodesToCheck, "xsyntax"); // additional shortcode to check (not language)
-
-    foreach ($xartaCodesToCheck as $searchLang)
+    $potentialShortcode = strpos($content, '[');
+    if($potentialShortcode !== FALSE)
     {
-        //$searchLang = 'code';
-        if(strpos($content,'['.$searchLang) !== FALSE)
+        global $xartaLangs;
+        $xartaCodesToCheck = $xartaLangs;
+        array_push($xartaCodesToCheck, "xsyntax"); // additional shortcode to check (not language)
+
+        foreach ($xartaCodesToCheck as $searchLang)
         {
+            //$searchLang = 'code';
+            if(strpos($content,'['.$searchLang, $potentialShortcode) !== FALSE)
+            {
 
-            $searchString = '/\['.$searchLang.'(.*)\]/'; // https://regex101.com/
-            $replaceString = "[$searchLang $1 ]<pre class=\"xprotect\">";
+                $searchString = '/\['.$searchLang.'(.*)\]/'; // https://regex101.com/
+                $replaceString = "[$searchLang $1 ]<pre class=\"xprotect\">";
 
-            // using preg_replace to cope with attributes (no wild card in str_pos)
-            // can't easily do the whole [shortcode atts]code-to-highlight[/shortcode]
-            // in one go though as it get's complicated when the shortcode appears
-            // more than once, successively (have to look at occurances etc.)
-            // and computationally gets expensive.  This is a compromise.
-            $content = preg_replace( $searchString, $replaceString , $content );
-            $content = str_replace('[/'.$searchLang.']', '</pre><!-- end xprotect -->[/'.$searchLang.']', $content);
+                // using preg_replace to cope with attributes (no wild card in str_pos)
+                // can't easily do the whole [shortcode atts]code-to-highlight[/shortcode]
+                // in one go though as it get's complicated when the shortcode appears
+                // more than once, successively (have to look at occurances etc.)
+                // and computationally gets expensive.  This is a compromise.
+                $content = preg_replace( $searchString, $replaceString , $content );
+                $content = str_replace('[/'.$searchLang.']', '</pre><!-- end xprotect -->[/'.$searchLang.']', $content);
+            }
+            //break;
         }
-        //break;
     }
+
 
 
 
