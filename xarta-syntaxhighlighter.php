@@ -4,121 +4,250 @@ namespace xarta\syntaxhighlighter;
  * Plugin Name: Xarta Syntaxhighlighter
  * Plugin URI: https://blog.xarta.co.uk
  * Description: Simple WordPress ajax implementation of https://github.com/syntaxhighlighter/syntaxhighlighter/wiki
- * Version: 0.0.0
+ * Version: 0.0.1
  * Author: David Bayliss
  * Author URI: https://blog.xarta.co.uk
  * License: MIT
  */
 
 
- /**
-  * WARNING: THIS IS MY FIRST PLUG-IN ... VERY RUDIMENTARY/CRUDE; UNDER DEVELOPMENT
-  * ... and not got around to learning PHP yet (or JavaScript, properly) so very basic.
-  *
-  * Purpose:
-  * 1.) provide shortcodes to process and turn into <pre blah blah></pre> syntax
-  *     to be picked-up by the Syntaxhighlighter javascript/css client
-  *
-  *     ... I've modified the build-output of syntaxhighlighter.js to provide
-  *     ... a simple custom event bind to re-execute the highlighting
-  *     ... to simplify ajax loading of code from GitHub
-  *
-  * 2.) fetch raw file code from GitHub (or use other code in an attribute*)
-  *
-  * 3.) wrap output with other DIVS for use with other plug-ins
-  *     Requires two other plug-ins: 
-  *         https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/
-  *         https://en-gb.wordpress.org/plugins/forget-about-shortcode-buttons/
-  *         ... and my own JavaScript related to those plug-ins
-  *
-  */
 
 
-        // ****************************************************
-        // TODO -- URGENT                                     *
-        //         How much "data" i.e. code e.g. from        *
-        //           GitHub, can an associative array member  *
-        //           hold?  Are there other limits?          *
-        //           Should I set limits to $_POST & data?  *
-        //         WordPress standard plugin stuff ...      *
-        //         ABSPATH thingy?                          *
-        //         Encapsulate somehow ... OOP / Class?     *
-        //         *** CURRENTLY GLOBAL SPACE ***           *
-        //         Standard security practice?              *
-        // **************************************************
+
+
+
+    /**             *********\
+    *               * WARNING *         * THIS IS MY FIRST PLUG-IN *
+    *               ***********
+    *
+    *               &&,  not got around to learning PHP yet
+    *               ||,  JavaScript, (properly). So very basic.
+    */
+
+    /**             *********\
+    *               * PURPOSE *         * SYNTAX HIGHLIGHT RAW GITHUB CODE *
+    *               ***********
+    * 
+    * -------------------------------------------------------------------------------------------
+    * 1.) provide shortcodes to process and turn into <pre blah blah></pre> syntax
+    *     to be picked-up by the Syntaxhighlighter javascript/css client
+    *
+    *     ... I've modified the build-output of syntaxhighlighter.js to provide
+    *     ... a simple custom event bind to re-execute the highlighting
+    *     ... to simplify ajax loading of code from GitHub
+    *     ... - not using WordPress Ajax as I thought had to use admin stuff - but not sure
+    *     ... - so anyway - using own ajax
+    *
+    * -------------------------------------------------------------------------------------------
+    * 2.) fetch raw file code from GitHub (or use other code in an attribute*)
+    *
+    * -------------------------------------------------------------------------------------------
+    * 3.) wrap output with other DIVS for use with other plug-ins
+    *     Requires two other plug-ins: 
+    *
+    *         https://noorsplugin.com/2014/01/11/wordpress-colorbox-plugin/
+    *
+    *         https://en-gb.wordpress.org/plugins/forget-about-shortcode-buttons/
+    *
+    *         ... and my own JavaScript related to those plug-ins
+    *
+    */
+
+    /**             *********\
+    *               * TODO'S  *         * OVER-TIME *
+    *               ***********
+    *
+    *   check limits of associative array member for holding raw GitHub data
+    *   look into ABSPATH
+    *   look into doing OOP properly, and autoloading
+    */
 
 
 if ( ! defined( 'WPINC' ) ) {
     die;
 }
 
-class XartaSyntaxHL
-{
-    public $bar;
-    
-    public function __construct() {
-        $this->bar = function() {
-            //return 42;
-        };
-    }
-}
-
-$xSyntaxHL = new XartaSyntaxHL();
-
-// as of PHP 5.3.0:
-$func = $xSyntaxHL->bar;
-//echo $func(), PHP_EOL;
-
-// alternatively, as of PHP 7.0.0:
-//echo ($xSyntaxHL->bar)(), PHP_EOL;
-
-
-
 require 'xarta-syntaxhighlighter-attribute-checks.php';
 require 'xarta-syntaxhighlighter-helper-functions.php';
 
-//echo $xartaAmIaccessible;
-
-function xarta_load_scripts($hook) {
- 
-    // create my own version codes
-    $xarta_global_js_ver  = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-global-functions.js' ));
-    $syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'theme.css' ));
-    $x_syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'x_syntaxhighlighter_css' ));
-     
-    // 
-    wp_register_script( 'xarta_global_js', plugins_url( 'xarta-global-functions.js', __FILE__ ), array(), $xarta_global_js_ver );
-    wp_register_script('xarta_syntaxhighlighter_site_footer', plugins_url('xarta-syntaxhighlighter-site-footer.js', __FILE__ ), array('syntaxhighlighter'), true );
-    wp_register_script('syntaxhighlighter', plugins_url( 'syntaxhighlighter.js', __FILE__ ), array('xarta_global_js'));
-
-    wp_register_style( 'syntaxhighlighter_css',    plugins_url( 'theme.css',    __FILE__ ), array(),   $syntax_theme_css_ver, 'all' );
-    wp_register_style( 'x_syntaxhighlighter_css',    plugins_url( 'xarta-syntaxhighlighter-site-footer.css',    __FILE__ ), array(syntaxhighlighter_css),   $x_syntax_theme_css_ver, 'all' );
-    
-    wp_enqueue_script( 'xarta_global_js' );   
-
-    // make sure single-post-page thingy template exists that only provides 'the_content'
-    // for me to run the ajax shortcode on to handle $_POST
-    // TODO: WordPress own Ajax methods - am I confused thinking they require admin?
-    xarta_setup_syntax_ajax_single_template(); 
-
-    //xarta_setup_syntax_ajax_post(); // TODO: automate (currently manually making this post)
-
-}
-add_action('wp_enqueue_scripts', '\xarta\syntaxhighlighter\xarta_load_scripts');
 
 
-// only do_action this bit when/if needed (scripts already registered)
-function xarta_enqueue_syntax_scripts()
+
+    /**             *********\
+    *               * ALIASES *         * ALIAS SHORTCODES *
+    *               ***********
+    *
+    * c++ causes a problem in the admin section with tiny mce & add media button
+    * (so use cpp instead ... but c# seems ok so far)
+    *
+    ****************************************************************************************/
+    $xartaLangs = array('code', 'bash', 'cpp', 'c#', 'php', 'sql', 'js', 'css', 'xml');
+    /** ************************************************************************************/
+
+
+
+class XartaSyntaxHLenqueue
 {
-    wp_enqueue_style ( 'syntaxhighlighter_css' );
-    wp_enqueue_style ( 'x_syntaxhighlighter_css' );
-    wp_enqueue_script( 'xarta_syntaxhighlighter_site_footer' );
-    wp_enqueue_script( 'syntaxhighlighter' );
-}
-add_action('x_enqueue_syntax_scripts', '\xarta\syntaxhighlighter\xarta_enqueue_syntax_scripts');
+    public function __construct()
+    {
+        // enqueue for every page
+        add_action('wp_enqueue_scripts', array($this, 'enqueueAssetsEveryTime'));
 
-// nb 'c++' stops tiny mce working (incl. add media button)
-$xartaLangs = array('xartacode', 'bash', 'cpp', 'c#', 'php', 'sql', 'js', 'css', 'xml');
+        // e.g. only enqueue / do_action('x_enqueue_syntax_scripts'); in:
+        //      xgithub_ajax_shortcode
+        //      xarta_highlight
+        add_action('x_enqueue_syntax_scripts', array($this, 'enqueueAssetsShortCode'));
+        add_action('x_enqueue_syntax_scripts', array($this, 'xarta_setup_syntax_ajax_single_template'));
+        // add_action('x_enqueue_syntax_scripts', array($this, 'xarta_setup_syntax_ajax_post'));  // TODO
+    }
+
+    public function enqueueAssetsEveryTime()
+    {
+        // create my own version codes
+        $xarta_global_js_ver  = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-global-functions.js' ));
+        $syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'theme.css' ));
+        $x_syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'x_syntaxhighlighter_css' ));
+            
+        // 
+        wp_register_script( 'xarta_global_js', plugins_url( 'xarta-global-functions.js', __FILE__ ), array(), $xarta_global_js_ver );
+        wp_register_script('xarta_syntaxhighlighter_site_footer', plugins_url('xarta-syntaxhighlighter-site-footer.js', __FILE__ ), 
+            array('syntaxhighlighter'), true );
+
+        wp_register_script('syntaxhighlighter', plugins_url( 'syntaxhighlighter.js', __FILE__ ), array('xarta_global_js'));
+
+        wp_register_style( 'syntaxhighlighter_css',    plugins_url( 'theme.css',    __FILE__ ), array(),   $syntax_theme_css_ver, 'all' );
+        wp_register_style( 'x_syntaxhighlighter_css',    plugins_url( 'xarta-syntaxhighlighter-site-footer.css',    __FILE__ ), 
+            array(syntaxhighlighter_css),   $x_syntax_theme_css_ver, 'all' );
+
+        // Only script I enqueue straight-away
+        wp_enqueue_script( 'xarta_global_js' );   
+    }
+
+    public function enqueueAssetsShortCode()
+    {
+        wp_enqueue_style ( 'syntaxhighlighter_css' );
+        wp_enqueue_style ( 'x_syntaxhighlighter_css' );
+        wp_enqueue_script( 'xarta_syntaxhighlighter_site_footer' );
+        wp_enqueue_script( 'syntaxhighlighter' );
+    }
+
+    public function xarta_setup_syntax_ajax_single_template()
+    {
+        // a WordPress post template, that just returns "content"
+        // where I can put my ajax shortcode to process/respond to $_POST
+        // data thrown at it
+
+        // if not already there, copy to the theme template directory
+
+
+        $timestamp = date("Y-m-d h:i:sa");
+        // *****************************************************
+        $ajax_post_template_file_current_version = 5;      // **
+        // ************************************************** **
+        $feedback = '';
+        $ajax_post_template_file_name = get_stylesheet_directory().'/single-xgithub.php';
+        $ajax_post_template_file_create = TRUE;
+
+
+        if (file_exists($ajax_post_template_file_name) !== FALSE)
+        {
+            $ajax_post_template_file_create = FALSE;
+
+            // BUT ...
+
+            // I'M STILL READING THIS EVERY SINGLE TIME THE TEMPLATE IS USED
+            // ... TODO ... MAKE MORE EFFICIENT FOR VERSION CHECKING
+            // ... ONCE PER SESSION OR SOMETHING??? OR ...
+            // ... IF FILE DOESN'T EXIST, CREATE ... BUT THEN INSTEAD OF
+            // ... READFILE ... GET THE FILE TO CALL THIS FUNCTION WITH ITS
+            // ... VERSION NUMBER (IF THIS FUNCTION REMAINS ACCESSIBLE?)
+            $temp_read_file = file_get_contents($ajax_post_template_file_name);
+            $file_length = strlen($temp_read_file);
+
+            $lets_check_file_version = substr($temp_read_file,$file_length-5,3);
+            if ( intval($lets_check_file_version ) < $ajax_post_template_file_current_version)
+            {
+                $feedback = "lets_check_file_version = " . $lets_check_file_version;
+                $feedback .= "// intval(lets_check_file_version) = ". intval($lets_check_file_version);
+                $ajax_post_template_file_create = TRUE;
+            }
+        }
+
+
+        if($ajax_post_template_file_create === TRUE)
+        {
+            $ajax_post_template_for_my_xgithub_ajax_shortcode = 
+            '<?php
+            /**
+            WP Post Template: xgithub
+            */
+            // '.$feedback.'
+            // To help debugging filters:
+            function xarta_print_filters_for( $hook = "" ) {
+                global $wp_filter;
+                if( empty( $hook ) || !isset( $wp_filter[$hook] ) )
+                    return;
+
+                print "<pre>";
+                print_r( $wp_filter[$hook] );
+                print "</pre>";
+            }
+            function x_remove_eager_filter($file)
+            {
+                // remove printfriendly plugin filter (gets overzealous)
+
+                global $printfriendly;
+                remove_filter( "the_content", array($printfriendly, "show_link") );
+                remove_filter( "the_content", array($printfriendly, "add_pf_content_class_around_content_hook") );
+                
+                return $file;
+            }
+            while ( have_posts() ) : the_post();
+                add_filter("the_content", "x_remove_eager_filter", 0);
+                the_content();
+                // xarta/print_filters_for( "the_content" ); // for debug only
+            endwhile; // end of the loop.
+            // this file created by xarta-syntaxhighlighter plugin: '.$timestamp.'
+            // VERSION:   '.$ajax_post_template_file_current_version.'?>';
+            // END FILE
+            $success = file_put_contents ( $ajax_post_template_file_name, 
+                $ajax_post_template_for_my_xgithub_ajax_shortcode);
+            // echo $success;
+        }
+    }
+
+    public function xarta_setup_syntax_ajax_post()
+    {
+        // UNDER DEVELOPMENT / TODO
+        // DEVELOPING THIS - PROBLEM ON MY SITE AND "post_type"
+        // (have to use meta tables instead)
+
+        $post_arr = array(
+            'post_title'    =>  'random', 
+            'post_content'  =>  'demo text',
+            'post_type'     =>  'xgithub',
+            'post_status'   =>  'publish',
+            'post_author'   =>   1,
+            'post_category' =>  'uncategorised'
+        );
+
+        $id = wp_insert_post($post_arr, true);
+
+        echo $id;
+
+    }
+} 
+
+
+
+$xSyntaxHLenqueue = new XartaSyntaxHLenqueue();
+
+
+
+
+
+
+
 
 /**
  * In site header-code (JavaScript):
@@ -498,3 +627,31 @@ function xarta_highlight( $atts )
 
 
 
+
+
+
+/* TEMP NOTES FOR REFERENCE
+
+class XartaSyntaxHL
+{
+    public $bar;
+    
+    public function __construct() {
+        $this->bar = function() {
+            //return 42;
+        };
+    }
+}
+
+$xSyntaxHL = new XartaSyntaxHL();
+
+// as of PHP 5.3.0:
+$func = $xSyntaxHL->bar;
+//echo $func(), PHP_EOL;
+
+// alternatively, as of PHP 7.0.0:
+//echo ($xSyntaxHL->bar)(), PHP_EOL;
+
+
+
+*/
