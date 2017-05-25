@@ -1,5 +1,5 @@
 <?php
-
+namespace xarta\syntaxhighlighter;
 /**
  *  BEFORE looking at $atts array generally, the classname is scrutinised
  *         as it might need modifying. If supplied, it overrides the default.

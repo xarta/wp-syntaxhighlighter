@@ -1,4 +1,5 @@
 <?php
+namespace xarta\syntaxhighlighter;
 /**
  * Plugin Name: Xarta Syntaxhighlighter
  * Plugin URI: https://blog.xarta.co.uk
@@ -47,9 +48,36 @@
         // **************************************************
 
 
+if ( ! defined( 'WPINC' ) ) {
+    die;
+}
+
+class XartaSyntaxHL
+{
+    public $bar;
+    
+    public function __construct() {
+        $this->bar = function() {
+            //return 42;
+        };
+    }
+}
+
+$xSyntaxHL = new XartaSyntaxHL();
+
+// as of PHP 5.3.0:
+$func = $xSyntaxHL->bar;
+//echo $func(), PHP_EOL;
+
+// alternatively, as of PHP 7.0.0:
+//echo ($xSyntaxHL->bar)(), PHP_EOL;
+
+
+
 require 'xarta-syntaxhighlighter-attribute-checks.php';
 require 'xarta-syntaxhighlighter-helper-functions.php';
 
+//echo $xartaAmIaccessible;
 
 function xarta_load_scripts($hook) {
  
@@ -70,15 +98,16 @@ function xarta_load_scripts($hook) {
 
     // make sure single-post-page thingy template exists that only provides 'the_content'
     // for me to run the ajax shortcode on to handle $_POST
-    xarta_setup_syntax_ajax_single_template();
+    // TODO: WordPress own Ajax methods - am I confused thinking they require admin?
+    xarta_setup_syntax_ajax_single_template(); 
 
-    //xarta_setup_syntax_ajax_post();
+    //xarta_setup_syntax_ajax_post(); // TODO: automate (currently manually making this post)
 
 }
-add_action('wp_enqueue_scripts', 'xarta_load_scripts');
+add_action('wp_enqueue_scripts', '\xarta\syntaxhighlighter\xarta_load_scripts');
 
 
-
+// only do_action this bit when/if needed (scripts already registered)
 function xarta_enqueue_syntax_scripts()
 {
     wp_enqueue_style ( 'syntaxhighlighter_css' );
@@ -86,10 +115,11 @@ function xarta_enqueue_syntax_scripts()
     wp_enqueue_script( 'xarta_syntaxhighlighter_site_footer' );
     wp_enqueue_script( 'syntaxhighlighter' );
 }
-add_action('x_enqueue_syntax_scripts', xarta_enqueue_syntax_scripts);
+add_action('x_enqueue_syntax_scripts', '\xarta\syntaxhighlighter\xarta_enqueue_syntax_scripts');
 
+// nb 'c++' stops tiny mce working (incl. add media button)
+$xartaLangs = array('xartacode', 'bash', 'cpp', 'c#', 'php', 'sql', 'js', 'css', 'xml');
 
-$xartaLangs = array('code', 'bash', 'c++', 'c#', 'php', 'sql', 'js', 'css', 'xml');
 /**
  * In site header-code (JavaScript):
  * <script>syntaxhighlighterConfig = { className: 'xarta-big-code' };</script>
@@ -121,6 +151,7 @@ function xarta_before_the_content_normal_filters($content)
         {
             // leap-frog $end, looking for </code></pre> after
             // $start i.e. after where <pre><code> was found
+            // nb this precludes nesting
             $end = strpos($content, '</code></pre>', $start);
 
             if ($end !== FALSE)
@@ -181,7 +212,7 @@ function xarta_before_the_content_normal_filters($content)
 
     return $content;
 }
-add_filter('the_content', 'xarta_before_the_content_normal_filters', 4); // higher priority
+add_filter('the_content', '\xarta\syntaxhighlighter\xarta_before_the_content_normal_filters', 4); // higher priority
 
 
 
@@ -235,7 +266,7 @@ function xarta_remove_xprotect_pre_tags($code_content)
 // including this here as seems relevant to doing WordPress posts on Development
 // where additional control over output is important:
 // https://ikreativ.com/stop-wordpress-removing-html/
-function ikreativ_tinymce_fix( $init )
+function xarta_ikreativ_tinymce_fix( $init )
 {
     // html elements being stripped
     $init['extended_valid_elements'] = 'div[*], article[*]';
@@ -252,7 +283,7 @@ function ikreativ_tinymce_fix( $init )
     // pass back to wordpress
     return $init;
 }
-add_filter('tiny_mce_before_init', 'ikreativ_tinymce_fix');
+//add_filter('tiny_mce_before_init', 'xarta_ikreativ_tinymce_fix');
 /*
 */ // ------------------------------------------------------------------------
 
@@ -282,7 +313,7 @@ function github_shortcode( $atts = [])
 
     return file_get_contents(github_get_url($atts));
 }
-add_shortcode('github', 'github_shortcode');   //              <<<===== github
+add_shortcode('github', '\xarta\syntaxhighlighter\github_shortcode');   //              <<<===== github
 
 
 function cgithub_shortcode( $atts = [] ) 
@@ -291,7 +322,7 @@ function cgithub_shortcode( $atts = [] )
                 htmlspecialchars(github_shortcode($atts)) . 
             '</div></pre>';
 }
-add_shortcode('cgithub', 'cgithub_shortcode'); //              <<<====== cgithub
+add_shortcode('cgithub', '\xarta\syntaxhighlighter\cgithub_shortcode'); //              <<<====== cgithub
 
 
 function xgithub_shortcode( $atts )
@@ -304,7 +335,7 @@ function xgithub_shortcode( $atts )
     
     return xarta_highlight( $atts );     
 }
-add_shortcode('xgithub', 'xgithub_shortcode'); //               <<<====== xgithub
+add_shortcode('xgithub', '\xarta\syntaxhighlighter\xgithub_shortcode'); //               <<<====== xgithub
 
 
 function xgithub_ajax_shortcode( $atts = [])
@@ -329,7 +360,7 @@ function xgithub_ajax_shortcode( $atts = [])
         "LOADING CODE FROM GITHUB VIA AJAX...</div>";
 
 }
-add_shortcode('xgithub_ajax', 'xgithub_ajax_shortcode'); //    <<<====== xgithub_ajax
+add_shortcode('xgithub_ajax', '\xarta\syntaxhighlighter\xgithub_ajax_shortcode'); //    <<<====== xgithub_ajax
 
 
 function xgithub_ajax_response_shortcode()
@@ -351,7 +382,7 @@ function xgithub_ajax_response_shortcode()
     return xgithub_shortcode ($atts);
 }
 add_shortcode(  'xgithub_ajax_response', 
-                'xgithub_ajax_response_shortcode'); //       <<<====== xgithub_ajax_response
+                '\xarta\syntaxhighlighter\xgithub_ajax_response_shortcode'); //       <<<====== xgithub_ajax_response
 
 
 
@@ -375,7 +406,7 @@ function xsyntax_shortcode( $atts = [], $content = '' )
     //$atts['outputcode'] = $content;
     return xarta_highlight( $atts );
 }                                              //               *****************
-add_shortcode('xsyntax', 'xsyntax_shortcode'); //            <<<====== xsyntax *
+add_shortcode('xsyntax', '\xarta\syntaxhighlighter\xsyntax_shortcode'); //            <<<====== xsyntax *
                                                //               ***************
 function xarta_add_aliases()                   // ... and programmatically add aliases
 {
@@ -385,12 +416,12 @@ function xarta_add_aliases()                   // ... and programmatically add a
         add_shortcode($searchLang, function( $atts = [], $content = '') use ($searchLang)
         {
             $atts['lang'] = "$searchLang";
-            return xsyntax_shortcode( $atts, $content);
+            return \xarta\syntaxhighlighter\xsyntax_shortcode( $atts, $content);
         });
 
     }
 }
-xarta_add_aliases();
+xarta_add_aliases();  // THIS IS THE CULPRIT THAT STOPS TINY MCE AND ADD MEDIA IN WP-ADMIN FOR POSTS!!!!!!!!!!
 
 
 

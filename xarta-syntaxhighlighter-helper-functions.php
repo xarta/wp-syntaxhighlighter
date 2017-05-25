@@ -1,4 +1,7 @@
 <?php
+namespace xarta\syntaxhighlighter;
+
+$xartaAmIaccessible = "I am accessible";
 
 // TODO: test if this is still the case (no longer using original WordPress plugin)
 function fix_reference_issue($input) 
