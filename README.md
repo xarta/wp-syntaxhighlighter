@@ -16,7 +16,7 @@ And, Bob's your Uncle ... syntax highlighting of GitHub raw files retrieved opti
 
 ## MAJOR ISSUES: 
 
-* still in global scope (in WordPress) ... at least affects (*as in disables*) the "add media" button in the post-editor
+* still in global scope (in WordPress) ... ~~at least affects (*as in disables*) the "add media" button in the post-editor~~ *fixed*
 * still have to manually add a post with a custom template for the ajax response shortcode, and a path to it *although the template's automated now*
 * still have to manually set other variables (and still uses some global variables) etc.  
 * no admin part yet    

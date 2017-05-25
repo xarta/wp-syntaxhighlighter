@@ -74,11 +74,12 @@ require 'xarta-syntaxhighlighter-helper-functions.php';
 
 
     /**             *********\
-    *               * ALIASES *         * ALIAS SHORTCODES *
+    *               * ALIASES *         * ALIAS FOR SHORTCODES *
     *               ***********
     *
     * c++ causes a problem in the admin section with tiny mce & add media button
     * (so use cpp instead ... but c# seems ok so far)
+    * Only include aliases that the JavaScript SyntaxHighlighter knows about!
     *
     ****************************************************************************************/
     $xartaLangs = array('code', 'bash', 'cpp', 'c#', 'php', 'sql', 'js', 'css', 'xml');
