@@ -138,7 +138,7 @@ class Enqueue
 
         wp_register_style( 'syntaxhighlighter_css',    plugins_url( 'theme.css',    __FILE__ ), array(),   $syntax_theme_css_ver, 'all' );
         wp_register_style( 'x_syntaxhighlighter_css',    plugins_url( 'xarta-syntaxhighlighter-site-footer.css',    __FILE__ ), 
-            array(syntaxhighlighter_css),   $x_syntax_theme_css_ver, 'all' );
+            array('syntaxhighlighter_css'),   $x_syntax_theme_css_ver, 'all' );
 
         // Only script I enqueue straight-away
         wp_enqueue_script( 'xarta_global_js' );   
@@ -443,13 +443,15 @@ class TheContent
 
 class Shortcodes
 {
-    private $xartaLangs; // NULL TODO: ERROR CHECKING IN CONSTRUCTOR
-    private $xartaSyntaxHLoutput;
+    private $xartaLangs;                // NULL TODO: ERROR CHECKING IN CONSTRUCTOR
+    private $xartaSyntaxHLoutput;       // pass in object that generates response output
+    private $xartaSyntaxHLsanitise;     // pass in object that sanitises $atts array in shortcodes
 
-    public function __construct($xartaLangs)
+    public function __construct($xartaLangs, $xartaSyntaxHLsanitise)
     {
         $this->xartaLangs = $xartaLangs;
-        $this->xartaSyntaxHLoutput = new Output();
+        $this->xartaSyntaxHLoutput = new Output($xartaSyntaxHLsanitise);
+        $this->xartaSyntaxHLsanitise = $xartaSyntaxHLsanitise;
 
         add_shortcode('github',                 array($this, 'github_shortcode'));
         add_shortcode('cgithub',                array($this, 'cgithub_shortcode'));
@@ -596,9 +598,11 @@ class Shortcodes
 
 class Output
 {
-    public function __construct()
-    {
+    private $xartaSyntaxHLsanitise;
 
+    public function __construct($xartaSyntaxHLsanitise)
+    {
+        $this->xartaSyntaxHLsanitise=$xartaSyntaxHLsanitise;
     }
 
     // square bracket functions to prevent other shortcodes in 
@@ -644,7 +648,7 @@ class Output
 
         do_action('x_enqueue_syntax_scripts');
 
-        $atts = css_classname_and_instance_id($atts);
+        $atts = $this->xartaSyntaxHLsanitise->css_classname_and_instance_id($atts);
         $instanceID = $atts['instanceid'];
 
         // $options below requires that $atts have been massaged
@@ -706,42 +710,58 @@ class Output
 }
 
 
-
-
-/**
- *  BEFORE looking at $atts array generally, the classname is scrutinised
- *         as it might need modifying. If supplied, it overrides the default.
- *         The default is also a custom name set in syntaxhighlighter config.
- *         If empty in $atts, then the default is used.
- *  HOWEVER ... still a xarta requirement to provide a unique ID per "instance"
- */
-function css_classname_and_instance_id ($atts)
+class Sanitise
 {
-    $instanceID = 'xarta-id-'.trim(strval(uniqid()));   // unique id for every "instance"
-    $customClassName = 'xarta-big-code';                // also set in JavaScript header - 
-                                                        // syntaxhighlighter config
+    private $xartaLangs;
+    private $githubUsers;
+    private $githubUserDefault;
 
-    $atts = array_change_key_case( (array)$atts, CASE_LOWER);
-    if(!array_key_exists('classname', $atts)){ $atts['classname'] = ''; }
-
-    if(!empty($atts['classname']))
+    public function __construct($xartaLangs, $githubUsers, $githubUserDefault)
     {
-        // over-ride custom classname with what was provided in shortcode attributes
-        // will override JavaScript-set classname (syntaxhighlighter config) too
-        $atts['classname'] = $atts['classname'] . " $instanceID";
+        $this->xartaLangs = $xartaLangs;
+        $this->githubUsers = $githubUsers;
+        $this->githubUserDefault = $githubUserDefault;
     }
-    else
+    /**
+    *  BEFORE looking at $atts array generally, the classname is scrutinised
+    *         as it might need modifying. If supplied, it overrides the default.
+    *         The default is also a custom name set in syntaxhighlighter config.
+    *         If empty in $atts, then the default is used.
+    *  HOWEVER ... still a xarta requirement to provide a unique ID per "instance"
+    */
+    public function css_classname_and_instance_id ($atts)
     {
-        $atts['classname'] = "$customClassName $instanceID";
+        $instanceID = 'xarta-id-'.trim(strval(uniqid()));   // unique id for every "instance"
+        $customClassName = 'xarta-big-code';                // also set in JavaScript header - 
+                                                            // syntaxhighlighter config
+
+        $atts = array_change_key_case( (array)$atts, CASE_LOWER);
+        if(!array_key_exists('classname', $atts)){ $atts['classname'] = ''; }
+
+        if(!empty($atts['classname']))
+        {
+            // over-ride custom classname with what was provided in shortcode attributes
+            // will override JavaScript-set classname (syntaxhighlighter config) too
+            $atts['classname'] = $atts['classname'] . " $instanceID";
+        }
+        else
+        {
+            $atts['classname'] = "$customClassName $instanceID";
+        }
+
+        $atts['instanceid'] = $instanceID; // appending to array
+    
+        return $atts;   // only possibly added/modified "classname", and added "instanceid"
+                        // not touched anything else yet in the array
+                        // except made all keys lower-case
     }
 
-    $atts['instanceid'] = $instanceID; // appending to array
  
-    return $atts;   // only possibly added/modified "classname", and added "instanceid"
-                    // not touched anything else yet in the array
-                    // except made all keys lower-case
 }
-// *****************************
+
+
+
+
 
 
 const THIS_IS_MY_ATT = true;
@@ -1028,4 +1048,5 @@ class HelperFuncs
 
 $xartaSyntaxHLenqueue =     new Enqueue();
 $xartaSyntaxHLthecontent =  new TheContent($xartaLangs);
-$xartaSyntaxHLshortcodes =  new Shortcodes($xartaLangs);
+$xartaSyntaxHLsanitise =    new Sanitise($xartaLangs, $githubUsers, $githubUserDefault);
+$xartaSyntaxHLshortcodes =  new Shortcodes($xartaLangs, $xartaSyntaxHLsanitise);
