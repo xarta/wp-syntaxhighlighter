@@ -9,9 +9,9 @@ namespace xarta\syntaxhighlighter;
  */
 function css_classname_and_instance_id ($atts)
 {
-    $instanceID = xarta_get_instance_id();  // unique id for every "instance"
-    $customClassName = 'xarta-big-code';    // also set in JavaScript header - 
-                                            // syntaxhighlighter config
+    $instanceID = 'xarta-id-'.trim(strval(uniqid()));   // unique id for every "instance"
+    $customClassName = 'xarta-big-code';                // also set in JavaScript header - 
+                                                        // syntaxhighlighter config
 
     $atts = array_change_key_case( (array)$atts, CASE_LOWER);
     if(!array_key_exists('classname', $atts)){ $atts['classname'] = ''; }

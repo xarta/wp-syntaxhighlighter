@@ -69,7 +69,6 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 require 'xarta-syntaxhighlighter-attribute-checks.php';
-require 'xarta-syntaxhighlighter-helper-functions.php';
 
 
 
@@ -509,7 +508,7 @@ class Shortcodes
 
         do_action('x_enqueue_syntax_scripts');
 
-        $instance_id = xarta_get_instance_id();
+        $instance_id = 'xarta-id-'.trim(strval(uniqid()));
         $xartaAjaxCssClass = 'xarta-target-ajax';
 
         $ajaxurl = "https://blog.xarta.co.uk/2017/03/test-ajax/";
@@ -592,6 +591,42 @@ class Output
 
     }
 
+    // square bracket functions to prevent other shortcodes in 
+    // the source file from being evaluated!
+    private function x_squarebrackets_to_guid( $input)
+    {
+        $guid1 = 'f4cd1bfaa3fa49b28'.'984c326ab9b36d9';
+        $guid2 = '984c326ab9b36d9'.'f4cd1bfaa3fa49b28';
+        $step1 = str_replace('[',$guid1, $input);
+        $step2 = str_replace(']',$guid2, $step1);
+                            
+        return $step2;
+    }
+
+    private function x_guid_to_squarebrackets( $step2)
+    {
+        $guid1 = 'f4cd1bfaa3fa49b28'.'984c326ab9b36d9';
+        $guid2 = '984c326ab9b36d9'.'f4cd1bfaa3fa49b28';
+        $step3 = str_replace($guid1,'[', $step2);
+        $step4 = str_replace($guid2,']', $step3);
+    
+        return $step4;
+    }
+
+    // TODO: test if this is still the case (no longer using original WordPress plugin)
+    private function fix_reference_issue($input) 
+    {
+        if (strpos($input,'/// <reference',0)===0) 
+        {
+        return preg_replace('/^\/\/\/ <reference.+" \/>/', 
+            "/* Dave has auto-removed visual studio code typings reference \n   as it upsets syntax highlighter evolved */ ", $input); 
+        }
+        else 
+        {
+        return $input; 
+        } 
+    }
+
     public function xarta_highlight( $atts ) 
     {
         //echo "Debug, xarta_highlight, \$atts array:<br /><br />";
@@ -610,14 +645,14 @@ class Output
         
         $testoutput = $outputcode; // capture before anything done to it
 
-        $outputcode = x_squarebrackets_to_guid($outputcode); // prevent shortcodes in code
-                                                            // from being evaluated in do_shortcode()
-        $outputcode = fix_reference_issue($outputcode);      // TODO check if still necessary
+        $outputcode = $this->x_squarebrackets_to_guid($outputcode);     // prevent shortcodes in code
+                                                                        // from being evaluated in do_shortcode()
+        $outputcode = $this->fix_reference_issue($outputcode);                 // TODO check if still necessary
 
         // my attribute $escapelt
         if($escapelt === 'true')
         {
-            $outputcode = x_escape_lt($outputcode);
+            $outputcode = str_replace('<', '&lt;', $outputcode);
         }
 
         // my attribute $buttons
@@ -656,11 +691,34 @@ class Output
     
 
 
-        return x_guid_to_squarebrackets($codeoutput).$caption;
+        return $this->x_guid_to_squarebrackets($codeoutput).$caption;
     }
 }
 
 
-$xartaSyntaxHLenqueue = new Enqueue();
-$xartaSyntaxHLthecontent = new TheContent($xartaLangs);
-$xartaSyntaxHLshortcodes = new Shortcodes($xartaLangs);
+
+
+/*
+ * http://stackoverflow.com/questions/3489387/print-post-variable-name-along-with-value
+ * $pad='' gives $pad a default value, meaning we don't have 
+ * to pass printArray a value for it if we don't want to if we're
+ * happy with the given default value (no padding)
+ */
+function printArray($array, $pad='')
+{
+     foreach ($array as $key => $value)
+     {
+        echo $pad . "$key => $value<br />";
+        if(is_array($value))
+        {
+            printArray($value, $pad.' ');
+        }  
+    } 
+}
+
+
+
+
+$xartaSyntaxHLenqueue =     new Enqueue();
+$xartaSyntaxHLthecontent =  new TheContent($xartaLangs);
+$xartaSyntaxHLshortcodes =  new Shortcodes($xartaLangs);
