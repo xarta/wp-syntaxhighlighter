@@ -4,7 +4,7 @@ namespace xarta\syntaxhighlighter;
  * Plugin Name: Xarta Syntaxhighlighter
  * Plugin URI: https://blog.xarta.co.uk
  * Description: Simple WordPress ajax implementation of https://github.com/syntaxhighlighter/syntaxhighlighter/wiki
- * Version: 0.0.1
+ * Version: 0.1.0
  * Author: David Bayliss
  * Author URI: https://blog.xarta.co.uk
  * License: MIT
