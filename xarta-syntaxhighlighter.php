@@ -493,7 +493,7 @@ class Shortcodes
         $atts['title'] = $this->github_get_url($atts);
 
         //echo "xgithub_shortcode<br /><br />";
-        //printArray($atts);
+        //HelperFuncs::printArray($atts);
         
 
         // TODO TODO TODO HERE HERE HERE WILL BECOME INTERNAL REFERENCE?
@@ -504,7 +504,7 @@ class Shortcodes
     public function xgithub_ajax_shortcode( $atts = [])
     {
         //echo "Debug. This is \$atts array before encoding:<br /><br />";
-        //printArray($atts);
+        //HelperFuncs::printArray($atts);
 
         do_action('x_enqueue_syntax_scripts');
 
@@ -539,7 +539,7 @@ class Shortcodes
         $atts = $step1;
 
         // echo "xgithub_ajax_reponse_shortcode";
-        // printArray($atts);
+        // HelperFuncs::printArray($atts);
 
         return $this->xgithub_shortcode ($atts);
     }
@@ -630,7 +630,7 @@ class Output
     public function xarta_highlight( $atts ) 
     {
         //echo "Debug, xarta_highlight, \$atts array:<br /><br />";
-        //printArray($atts);
+        //HelperFuncs::printArray($atts);
 
         do_action('x_enqueue_syntax_scripts');
 
@@ -695,27 +695,31 @@ class Output
     }
 }
 
-
-
-
-/*
- * http://stackoverflow.com/questions/3489387/print-post-variable-name-along-with-value
- * $pad='' gives $pad a default value, meaning we don't have 
- * to pass printArray a value for it if we don't want to if we're
- * happy with the given default value (no padding)
- */
-function printArray($array, $pad='')
+class HelperFuncs
 {
-     foreach ($array as $key => $value)
-     {
-        echo $pad . "$key => $value<br />";
-        if(is_array($value))
-        {
-            printArray($value, $pad.' ');
-        }  
-    } 
-}
+    public function __construct()
+    {
+    }
 
+
+    /*
+    * http://stackoverflow.com/questions/3489387/print-post-variable-name-along-with-value
+    * $pad='' gives $pad a default value, meaning we don't have 
+    * to pass HelperFuncs::printArray a value for it if we don't want to if we're
+    * happy with the given default value (no padding)
+    */
+    public static function printArray($array, $pad='')
+    {
+        foreach ($array as $key => $value)
+        {
+            echo $pad . "$key => $value<br />";
+            if(is_array($value))
+            {
+                printArray($value, $pad.' ');
+            }  
+        } 
+    }
+}
 
 
 
