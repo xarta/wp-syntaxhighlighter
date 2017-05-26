@@ -25,7 +25,7 @@ namespace xarta\syntaxhighlighter;
     */
 
     /**             *********\
-    *               * PURPOSE *         * SYNTAX HIGHLIGHT RAW GITHUB CODE *
+    *               * PURPOSE *         * (PRIMARY) SYNTAX HIGHLIGHT RAW GITHUB CODE *
     *               ***********
     * 
     * -------------------------------------------------------------------------------------------
@@ -60,6 +60,7 @@ namespace xarta\syntaxhighlighter;
     *   check limits of associative array member for holding raw GitHub data
     *   look into ABSPATH
     *   look into doing OOP properly, and autoloading
+    *   NOTE TO SELF: Use A: drive in Xarta8
     */
 
 
@@ -74,12 +75,13 @@ require 'xarta-syntaxhighlighter-helper-functions.php';
 
 
     /**             *********\
-    *               * ALIASES *         * ALIAS FOR SHORTCODES *
+    *               * ALIASES *         * ALIAS ARRAY FOR SHORTCODES *
     *               ***********
     *
     * c++ causes a problem in the admin section with tiny mce & add media button
     * (so use cpp instead ... but c# seems ok so far)
     * Only include aliases that the JavaScript SyntaxHighlighter knows about!
+    * Programmatically add shortcodes based on this array later
     *
     ****************************************************************************************/
     $xartaLangs = array('code', 'bash', 'cpp', 'c#', 'php', 'sql', 'js', 'css', 'xml');
@@ -87,7 +89,16 @@ require 'xarta-syntaxhighlighter-helper-functions.php';
 
 
 
-class XartaSyntaxHLenqueue
+    /**             *********\
+    *               * ENQUEUE *         * ENQUEUE JS, CSS, & CHECK AJAX TEMPLATE EXISTS *
+    *               ***********
+    *
+    * Split the enqueing as not everything needed at 'wp_enqueue_scripts' time
+    * Generate a page template for my own ajax function, if it doesn't exist or is old expired version'
+    *
+    */
+
+class Enqueue
 {
     public function __construct()
     {
@@ -107,7 +118,7 @@ class XartaSyntaxHLenqueue
         // create my own version codes
         $xarta_global_js_ver  = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-global-functions.js' ));
         $syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'theme.css' ));
-        $x_syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'x_syntaxhighlighter_css' ));
+        $x_syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-syntaxhighlighter-site-footer.css' ));
             
         // 
         wp_register_script( 'xarta_global_js', plugins_url( 'xarta-global-functions.js', __FILE__ ), array(), $xarta_global_js_ver );
@@ -177,6 +188,8 @@ class XartaSyntaxHLenqueue
 
         if($ajax_post_template_file_create === TRUE)
         {
+            // TODO ... this without the leading white-space from the indentation somehow
+            //      ... maybe an external file reference (require maybe)
             $ajax_post_template_for_my_xgithub_ajax_shortcode = 
             '<?php
             /**
@@ -219,7 +232,7 @@ class XartaSyntaxHLenqueue
 
     public function xarta_setup_syntax_ajax_post()
     {
-        // UNDER DEVELOPMENT / TODO
+        // UNDER DEVELOPMENT / TODO / don't use yet!!!
         // DEVELOPING THIS - PROBLEM ON MY SITE AND "post_type"
         // (have to use meta tables instead)
 
@@ -239,9 +252,7 @@ class XartaSyntaxHLenqueue
     }
 } 
 
-
-
-$xSyntaxHLenqueue = new XartaSyntaxHLenqueue();
+$xartaSyntaxHLenqueue = new Enqueue();
 
 
 
@@ -391,171 +402,136 @@ function xarta_remove_xprotect_pre_tags($code_content)
 }
 
 
-/* OOPS - MAKES THINGS WORSE ... TODO INVESTIGATE ------------------------------
-*/
-// including this here as seems relevant to doing WordPress posts on Development
-// where additional control over output is important:
-// https://ikreativ.com/stop-wordpress-removing-html/
-function xarta_ikreativ_tinymce_fix( $init )
+class Shortcodes
 {
-    // html elements being stripped
-    $init['extended_valid_elements'] = 'div[*], article[*]';
-
-    // don't remove line breaks
-    $init['remove_linebreaks'] = false;
-
-    // convert newline characters to BR
-    $init['convert_newlines_to_brs'] = false;
-
-    // don't remove redundant BR
-    $init['remove_redundant_brs'] = false;
-
-    // pass back to wordpress
-    return $init;
-}
-//add_filter('tiny_mce_before_init', 'xarta_ikreativ_tinymce_fix');
-/*
-*/ // ------------------------------------------------------------------------
-
-
-function github_get_url($atts)
-{
-    // TODO'S
-    //  - $raw ... check well-formed, no http:// etc. and 200 response?
-
-    // hard-code here as not sure of security risk of php file_get_contents 
-    // ... available to shortcode
-    $github_base_url = 'https://raw.githubusercontent.com/';
-    $github_user = constrain_github_user($atts['github_user']);
-    $repo_raw_file = $atts['raw'];
-    return  "$github_base_url$github_user/$repo_raw_file";
-}
-
-/**
- * MY SYNTAXHIGHLIGHTER WORDPRESS SHORTCODES INCL. GET FROM GITHUB
- *
- */
-
-function github_shortcode( $atts = []) 
-{
-    // TODO
-    //  - set-up own Git server as fallback
-
-    return file_get_contents(github_get_url($atts));
-}
-add_shortcode('github', '\xarta\syntaxhighlighter\github_shortcode');   //              <<<===== github
-
-
-function cgithub_shortcode( $atts = [] ) 
-{
-    return  '<pre><div class="notjq">'. 
-                htmlspecialchars(github_shortcode($atts)) . 
-            '</div></pre>';
-}
-add_shortcode('cgithub', '\xarta\syntaxhighlighter\cgithub_shortcode'); //              <<<====== cgithub
-
-
-function xgithub_shortcode( $atts )
-{
-    $atts['outputcode'] = github_shortcode($atts);
-    $atts['title'] = github_get_url($atts);
-
-    //echo "xgithub_shortcode<br /><br />";
-    //printArray($atts);
-    
-    return xarta_highlight( $atts );     
-}
-add_shortcode('xgithub', '\xarta\syntaxhighlighter\xgithub_shortcode'); //               <<<====== xgithub
-
-
-function xgithub_ajax_shortcode( $atts = [])
-{
-    //echo "Debug. This is \$atts array before encoding:<br /><br />";
-    //printArray($atts);
-
-    do_action('x_enqueue_syntax_scripts');
-
-    $instance_id = xarta_get_instance_id();
-    $xartaAjaxCssClass = 'xarta-target-ajax';
-
-    $ajaxurl = "https://blog.xarta.co.uk/2017/03/test-ajax/";
-
-    $step1 = json_encode($atts);               // input
-    $step2 = base64_encode($step1);
-    $step3 = strtr($step2, '+/=', '-_,');      // url friendly
-    $ajaxpost = "atts=$step3";                 // output
-
-    return "<div class=\"$xartaAjaxCssClass $instance_id\" ".
-        "data-url=\"$ajaxurl\" data-post=\"$ajaxpost\">".
-        "LOADING CODE FROM GITHUB VIA AJAX...</div>";
-
-}
-add_shortcode('xgithub_ajax', '\xarta\syntaxhighlighter\xgithub_ajax_shortcode'); //    <<<====== xgithub_ajax
-
-
-function xgithub_ajax_response_shortcode()
-{
-    // TODO - ERROR HANDLING!!!
-
-    // reverse of xgithub_ajax_shortcode
-    $ajaxpost = $_POST['atts'];                     // input
-    $step3 = strtr($ajaxpost, '-_,', '+/=');        // was url friendly
-    $step2 = base64_decode($step3);
-    $step1 = json_decode($step2,true);              // output
-                                                    // nb: "true" for associative array
-    
-    $atts = $step1;
-
-    // echo "xgithub_ajax_reponse_shortcode";
-    // printArray($atts);
-
-    return xgithub_shortcode ($atts);
-}
-add_shortcode(  'xgithub_ajax_response', 
-                '\xarta\syntaxhighlighter\xgithub_ajax_response_shortcode'); //       <<<====== xgithub_ajax_response
-
-
-
-
-function xsyntax_shortcode( $atts = [], $content = '' )
-{
-    // $atts is likely small here, so lower cost doing this
-    $atts = array_change_key_case( (array)$atts, CASE_LOWER);
-
-    // for this shortcode, likely less inline code ... probably
-    // don't want my buttons or lightbox, so check if they exist,
-    // and if not, then set to them to default to false, rather
-    // than be defaulted later to true
-    if(!array_key_exists('buttons', $atts)){ $atts['buttons'] = 'false'; }
-    if(!array_key_exists('lightbox', $atts)){ $atts['lightbox'] = 'false'; }
-    if(!array_key_exists('light', $atts)){ $atts['light'] = '1'; }
-
-    // for this shortcode (and aliases), we get the code inbetween shortcode tags
-    // e.g. $content.  But xarta_highlight looks for array member 'outputcode'
-    $atts['outputcode'] = xarta_remove_xprotect_pre_tags($content);
-    //$atts['outputcode'] = $content;
-    return xarta_highlight( $atts );
-}                                              //               *****************
-add_shortcode('xsyntax', '\xarta\syntaxhighlighter\xsyntax_shortcode'); //            <<<====== xsyntax *
-                                               //               ***************
-function xarta_add_aliases()                   // ... and programmatically add aliases
-{
-    global $xartaLangs;
-    foreach ($xartaLangs as $searchLang)
+    public function __construct($xartaLangs)
     {
-        add_shortcode($searchLang, function( $atts = [], $content = '') use ($searchLang)
+        add_shortcode('github',                 array($this, 'github_shortcode'));
+        add_shortcode('cgithub',                array($this, 'cgithub_shortcode'));
+        add_shortcode('xgithub',                array($this, 'xgithub_shortcode'));
+        add_shortcode('xgithub_ajax',           array($this, 'xgithub_ajax_shortcode'));
+        add_shortcode('xgithub_ajax_response',  array($this, 'xgithub_ajax_response_shortcode'));
+        add_shortcode('xsyntax',                array($this, 'xsyntax_shortcode'));
+
+        foreach ($xartaLangs as $searchLang)
         {
-            $atts['lang'] = "$searchLang";
-            return \xarta\syntaxhighlighter\xsyntax_shortcode( $atts, $content);
-        });
+            add_shortcode($searchLang, function( $atts = [], $content = '') use ($searchLang)
+            {
+                $atts['lang'] = "$searchLang";
+                return $this->xsyntax_shortcode( $atts, $content);
+            });
+        }
+    }
+
+    private function github_get_url($atts)
+    {
+        // TODO'S
+        //  - $raw ... check well-formed, no http:// etc. and 200 response?
+
+        // hard-code here as not sure of security risk of php file_get_contents 
+        // ... available to shortcode
+        $github_base_url = 'https://raw.githubusercontent.com/';
+        $github_user = constrain_github_user($atts['github_user']);
+        $repo_raw_file = $atts['raw'];
+        return  "$github_base_url$github_user/$repo_raw_file";
+    }
+
+    public function github_shortcode( $atts = []) 
+    {
+        // TODO
+        //  - set-up own Git server as fallback
+
+        return file_get_contents($this->github_get_url($atts));
+    }
+
+    public function cgithub_shortcode( $atts = [] ) 
+    {
+        return  '<pre><div class="notjq">'. 
+                    htmlspecialchars($this->github_shortcode($atts)) . 
+                '</div></pre>';
+    }
+
+    public function xgithub_shortcode( $atts )
+    {
+        //global $xartaSyntaxHLshortcodes;
+        $atts['outputcode'] = $this->github_shortcode($atts);
+        $atts['title'] = $this->github_get_url($atts);
+
+        //echo "xgithub_shortcode<br /><br />";
+        //printArray($atts);
+        
+
+        // TODO TODO TODO HERE HERE HERE WILL BECOME INTERNAL REFERENCE?
+        return xarta_highlight( $atts );     
+    }
+    
+
+    public function xgithub_ajax_shortcode( $atts = [])
+    {
+        //echo "Debug. This is \$atts array before encoding:<br /><br />";
+        //printArray($atts);
+
+        do_action('x_enqueue_syntax_scripts');
+
+        $instance_id = xarta_get_instance_id();
+        $xartaAjaxCssClass = 'xarta-target-ajax';
+
+        $ajaxurl = "https://blog.xarta.co.uk/2017/03/test-ajax/";
+
+        $step1 = json_encode($atts);               // input
+        $step2 = base64_encode($step1);
+        $step3 = strtr($step2, '+/=', '-_,');      // url friendly
+        $ajaxpost = "atts=$step3";                 // output
+
+        return "<div class=\"$xartaAjaxCssClass $instance_id\" ".
+            "data-url=\"$ajaxurl\" data-post=\"$ajaxpost\">".
+            "LOADING CODE FROM GITHUB VIA AJAX...</div>";
 
     }
+
+    public function xgithub_ajax_response_shortcode()
+    {
+        //global $xartaSyntaxHLshortcodes;
+        // TODO - ERROR HANDLING!!!
+
+        // reverse of xgithub_ajax_shortcode
+        $ajaxpost = $_POST['atts'];                     // input
+        $step3 = strtr($ajaxpost, '-_,', '+/=');        // was url friendly
+        $step2 = base64_decode($step3);
+        $step1 = json_decode($step2,true);              // output
+                                                        // nb: "true" for associative array
+        
+        $atts = $step1;
+
+        // echo "xgithub_ajax_reponse_shortcode";
+        // printArray($atts);
+
+        return $this->xgithub_shortcode ($atts);
+    }
+
+    public function xsyntax_shortcode( $atts = [], $content = '' )
+    {
+        // $atts is likely small here, so lower cost doing this
+        $atts = array_change_key_case( (array)$atts, CASE_LOWER);
+
+        // for this shortcode, likely less inline code ... probably
+        // don't want my buttons or lightbox, so check if they exist,
+        // and if not, then set to them to default to false, rather
+        // than be defaulted later to true
+        if(!array_key_exists('buttons', $atts)){ $atts['buttons'] = 'false'; }
+        if(!array_key_exists('lightbox', $atts)){ $atts['lightbox'] = 'false'; }
+        if(!array_key_exists('light', $atts)){ $atts['light'] = '1'; }
+
+        // for this shortcode (and aliases), we get the code inbetween shortcode tags
+        // e.g. $content.  But xarta_highlight looks for array member 'outputcode'
+        $atts['outputcode'] = xarta_remove_xprotect_pre_tags($content);
+        //$atts['outputcode'] = $content;
+        return xarta_highlight( $atts );
+    }
 }
-xarta_add_aliases();  // THIS IS THE CULPRIT THAT STOPS TINY MCE AND ADD MEDIA IN WP-ADMIN FOR POSTS!!!!!!!!!!
 
 
-
-
+$xartaSyntaxHLshortcodes = new Shortcodes($xartaLangs);
 
 
 
@@ -656,3 +632,30 @@ $func = $xSyntaxHL->bar;
 
 
 */
+
+
+/* OOPS - MAKES THINGS WORSE ... TODO INVESTIGATE ------------------------------
+*/
+// including this here as seems relevant to doing WordPress posts on Development
+// where additional control over output is important:
+// https://ikreativ.com/stop-wordpress-removing-html/
+function xarta_ikreativ_tinymce_fix( $init )
+{
+    // html elements being stripped
+    $init['extended_valid_elements'] = 'div[*], article[*]';
+
+    // don't remove line breaks
+    $init['remove_linebreaks'] = false;
+
+    // convert newline characters to BR
+    $init['convert_newlines_to_brs'] = false;
+
+    // don't remove redundant BR
+    $init['remove_redundant_brs'] = false;
+
+    // pass back to wordpress
+    return $init;
+}
+//add_filter('tiny_mce_before_init', 'xarta_ikreativ_tinymce_fix');
+/*
+*/ // ------------------------------------------------------------------------
