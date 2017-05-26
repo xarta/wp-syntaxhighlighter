@@ -252,160 +252,196 @@ class Enqueue
     }
 } 
 
-$xartaSyntaxHLenqueue = new Enqueue();
+    /**             *************\
+    *               * THE_CONTENT *         * PROTECT IT FROM BEING MASHED-UP *
+    *               ***************
+    *
+    * TWO TASKS FOR the_content, AND ONE FOR SYNTAX HIGHLIGHTING:
+    * <1> ----------------------------------
+    *       I want to be be able to type in code, including shortcodes e.g. [js]
+    *       or [js some-attributes]content[/js] etc. in <pre><code> whole-thing </code></pre>
+    *       tags (sometimes), without being processed as shortcodes.  So to do that,
+    *       I want to replace "<" and "[" in just those instances with "&lt;" and "&#91;"
+    * 
+    *       So, I mean, just the stuff between <pre><code> sandwich-filling </code></pre>
+    *
+    * <2> ----------------------------------
+    *       WordPress by default does things like remove <p> with wpauto etc. during the_content.
+    *       And, it won't know that [js some-attibutes]some-JavaScript[/js] should be immune.
+    *
+    *       So, in this task, every [js some-attributes]some-JavaScript[/js] (for example) gets
+    *       wrapped like this:
+    *
+    *       [js some-attributes ]<pre class="xprotect">some-JavaScript</pre><!-- end xprotect -->[/js]
+    *
+    *       ... for example (same for any alias etc.)
+    *
+    *
+    *         ****************************************************************************
+    *       **** TASKS ONE AND TWO ARE COMBINED, AND ADDED TO WORDPRESS'S "the_content" ****
+    *         ****************************************************************************
+    *
+    *
+    * <3> ----------------------------------
+    *       Later, as part of do_action ... in the shortcode that syntax-highlights the xprotect content,
+    *       the <pre></pre> can be both easily identified by the class xprotect and the html comment,
+    *       for easy removal before the response is delivered for the JavaScript syntaxhighlighter to do
+    *       its thing.
+    *
+    */
 
-
-
-
-
-
-
-
-/**
- * In site header-code (JavaScript):
- * <script>syntaxhighlighterConfig = { className: 'xarta-big-code' };</script>
- */
-
-
-// protect [js attributes]content-code[/js] style shortcodes by adding <pre></pre>
-// tags around the code inbetween the shortcode tags, and remove them later during
-// actual shortcode do_shortcode etc. (Protect from things like wpauto filter).
-function xarta_before_the_content_normal_filters($content)
+class TheContent
 {
-    // first of all though, this is a convenience for me so that in tiny mce
-    // (for example) I can type code in that's not going to be syntax highlighted,
-    // inbetween <pre><code> tags without having to worry about escaping
-    // ... and without having to worry about picking-up false positives for
-    // ... shortcodes in the second half of this function
 
-    $start = 0; // 0 from start of $content ... use as index (head)
-    $end = 0;   // 0 from start of $content ... use as index (tail)
+    private $xartaCodesToCheck; // NULL TODO: ERROR CHECKING IN CONSTRUCTOR
 
-    $contentLength = strlen($content);
+    public function __construct($xartaLangs)
+    {
+            $this->xartaCodesToCheck = $xartaLangs;
+            add_filter('the_content', array($this, 'xarta_before_the_content_normal_filters'), 4); // higher priority
+    }
 
-    while ( $end < $contentLength)
-    {   
-        // look in $content for <pre><code> from $end-value
-        // to end of file
-        $start = strpos($content, '<pre><code>', $end);
-        if ($start !== FALSE)
-        {
-            // leap-frog $end, looking for </code></pre> after
-            // $start i.e. after where <pre><code> was found
-            // nb this precludes nesting
-            $end = strpos($content, '</code></pre>', $start);
+    public function xarta_before_the_content_normal_filters($content)
+    {
 
-            if ($end !== FALSE)
+        // TASK ONE (see notes above class)
+
+        $start = 0; // 0 from start of $content ... use as index (head)
+        $end = 0;   // 0 from start of $content ... use as index (tail)
+
+        $contentLength = strlen($content);
+
+        while ( $end < $contentLength)
+        {   
+            // look in $content for <pre><code> from $end-value
+            // to end of file
+            $start = strpos($content, '<pre><code>', $end);
+            if ($start !== FALSE)
             {
-                $start = $start + 13;   // i.e. + characters for <pre><code>
-                                        // $end is already at beginning of </code></pre>
-                                        // so - like the filling of the sandwich ...
-                $pre_code_code_pre = substr($content, $start, $end-$start);
-                $pre_code_code_pre = str_replace('<', '&lt;', $pre_code_code_pre);
-                $pre_code_code_pre = str_replace('[', '&#91;', $pre_code_code_pre);
-                $content = substr_replace ($content, $pre_code_code_pre, $start, $end-$start);
+                // leap-frog $end, looking for </code></pre> after
+                // $start i.e. after where <pre><code> was found
+                // nb this precludes nesting
+                $end = strpos($content, '</code></pre>', $start);
 
-                // if more $content to look at, go round and round
+                if ($end !== FALSE)
+                {
+                    $start = $start + 13;   // i.e. + characters for <pre><code>
+                                            // $end is already at beginning of </code></pre>
+                                            // so - like the filling of the sandwich ...
+                    $pre_code_code_pre = substr($content, $start, $end-$start);
+                    $pre_code_code_pre = str_replace('<', '&lt;', $pre_code_code_pre);
+                    $pre_code_code_pre = str_replace('[', '&#91;', $pre_code_code_pre);
+                    $content = substr_replace ($content, $pre_code_code_pre, $start, $end-$start);
+
+                    // if more $content to look at, go round and round
+                }
+                else
+                {
+                    // broken <pre><code> tags (none closing)
+                    break;
+                }
             }
             else
             {
-                // broken <pre><code> tags (none closing)
+                // no <pre><code> (or run out of them to process)
                 break;
             }
         }
+
+        // TASK TWO (see notes above class)
+        $potentialShortcode = strpos($content, '[');
+        if($potentialShortcode !== FALSE)
+        {
+
+            array_push($this->xartaCodesToCheck, "xsyntax"); // additional shortcode to check (not language)
+
+            foreach ($this->xartaCodesToCheck as $searchLang)
+            {
+                //$searchLang = 'code';
+                if(strpos($content,'['.$searchLang, $potentialShortcode) !== FALSE)
+                {
+
+                    $searchString = '/\['.$searchLang.'(.*)\]/'; // https://regex101.com/
+                    $replaceString = "[$searchLang $1 ]<pre class=\"xprotect\">";
+
+                    // using preg_replace to cope with attributes (no wild card in str_pos)
+                    // can't easily do the whole [shortcode atts]code-to-highlight[/shortcode]
+                    // in one go though as it get's complicated when the shortcode appears
+                    // more than once, successively (have to look at occurances etc.)
+                    // and computationally gets expensive.  This is a compromise.
+                    $content = preg_replace( $searchString, $replaceString , $content );
+                    $content = str_replace('[/'.$searchLang.']', '</pre><!-- end xprotect -->[/'.$searchLang.']', $content);
+                }
+                //break;
+            }
+        }
+
+        return $content;
+    }
+
+    // TASK THREE (see notes above class) KEEPING THIS ONE STATIC !!! (no dynamic refs)
+    public static function xarta_remove_xprotect_pre_tags($code_content)
+    {
+
+        /*
+        OLD METHOD ... using preg_replace: too expensive if large $code_content
+        ... discovered it broke without increasing pcre.backtrack_limit
+        ... e.g. ... ini_set('pcre.backtrack_limit', 99999999999);
+
+        // https://regex101.com/
+
+        // / (<pre class="xprotect">)((?s:.)*)(<\/pre>) /g etc.
+        // ... group 1 = '<pre class="xprotect">'
+        // ... group 2 = the code we want to restore without <pre> tags
+
+        $searchString = '/((?:<\/p>\s)<pre class="xprotect">)((?s:.)*)(<\/pre>)(?:\s<p>)/';
+        $code_content = preg_replace( $searchString, "$2", $code_content );
+        */
+
+
+
+        // new method ... changing xarta_before_the_content_normal_filters
+        //                to make </pre> more identifable ... and just replace
+        //                xprotect class <pre>, and identifiable </pre> here with ''
+
+        
+        if (strpos($code_content, "</p>\n<pre class=\"xprotect\">") !== FALSE)
+        {
+            // wpautop() on:
+            $code_content = str_replace("</p>\n<pre class=\"xprotect\">", '', $code_content);
+            $code_content = str_replace("</pre>\n<p><!-- end xprotect -->", '', $code_content);
+        }
         else
         {
-            // no <pre><code> (or run out of them to process)
-            break;
+            // wpautop() off:
+            $code_content = str_replace("<pre class=\"xprotect\">", '', $code_content);
+            $code_content = str_replace("</pre><!-- end xprotect -->", '', $code_content);
         }
+
+        return $code_content;
     }
-
-    $potentialShortcode = strpos($content, '[');
-    if($potentialShortcode !== FALSE)
-    {
-        global $xartaLangs;
-        $xartaCodesToCheck = $xartaLangs;
-        array_push($xartaCodesToCheck, "xsyntax"); // additional shortcode to check (not language)
-
-        foreach ($xartaCodesToCheck as $searchLang)
-        {
-            //$searchLang = 'code';
-            if(strpos($content,'['.$searchLang, $potentialShortcode) !== FALSE)
-            {
-
-                $searchString = '/\['.$searchLang.'(.*)\]/'; // https://regex101.com/
-                $replaceString = "[$searchLang $1 ]<pre class=\"xprotect\">";
-
-                // using preg_replace to cope with attributes (no wild card in str_pos)
-                // can't easily do the whole [shortcode atts]code-to-highlight[/shortcode]
-                // in one go though as it get's complicated when the shortcode appears
-                // more than once, successively (have to look at occurances etc.)
-                // and computationally gets expensive.  This is a compromise.
-                $content = preg_replace( $searchString, $replaceString , $content );
-                $content = str_replace('[/'.$searchLang.']', '</pre><!-- end xprotect -->[/'.$searchLang.']', $content);
-            }
-            //break;
-        }
-    }
-
-
-
-
-    return $content;
 }
-add_filter('the_content', '\xarta\syntaxhighlighter\xarta_before_the_content_normal_filters', 4); // higher priority
 
-
-
-
-function xarta_remove_xprotect_pre_tags($code_content)
-{
-
-    /*
-    OLD METHOD ... using preg_replace: too expensive if large $code_content
-    ... discovered it broke without increasing pcre.backtrack_limit
-    ... e.g. ... ini_set('pcre.backtrack_limit', 99999999999);
-
-    // https://regex101.com/
-
-    // / (<pre class="xprotect">)((?s:.)*)(<\/pre>) /g etc.
-    // ... group 1 = '<pre class="xprotect">'
-    // ... group 2 = the code we want to restore without <pre> tags
-
-    $searchString = '/((?:<\/p>\s)<pre class="xprotect">)((?s:.)*)(<\/pre>)(?:\s<p>)/';
-    $code_content = preg_replace( $searchString, "$2", $code_content );
+    /**             ************\
+    *               * SHORTCODES *         * add_shortcode *
+    *               **************
+    *
+    * shortcodes for inline syntax highlighting, github raw file highlighting,
+    * and github raw file retrieved by ajax calls (multiple within a post for example)
+    * highlighting.  All the aliases use xsyntax_shortcode
+    *
     */
-
-
-
-    // new method ... changing xarta_before_the_content_normal_filters
-    //                to make </pre> more identifable ... and just replace
-    //                xprotect class <pre>, and identifiable </pre> here with ''
-
-    
-    if (strpos($code_content, "</p>\n<pre class=\"xprotect\">") !== FALSE)
-    {
-        // wpautop() on:
-        $code_content = str_replace("</p>\n<pre class=\"xprotect\">", '', $code_content);
-        $code_content = str_replace("</pre>\n<p><!-- end xprotect -->", '', $code_content);
-    }
-    else
-    {
-        // wpautop() off:
-        $code_content = str_replace("<pre class=\"xprotect\">", '', $code_content);
-        $code_content = str_replace("</pre><!-- end xprotect -->", '', $code_content);
-    }
-
-
-
-    return $code_content;
-}
-
 
 class Shortcodes
 {
+    private $xartaLangs; // NULL TODO: ERROR CHECKING IN CONSTRUCTOR
+    private $xartaSyntaxHLoutput;
+
     public function __construct($xartaLangs)
     {
+        $this->xartaLangs = $xartaLangs;
+        $this->xartaSyntaxHLoutput = new Output();
+
         add_shortcode('github',                 array($this, 'github_shortcode'));
         add_shortcode('cgithub',                array($this, 'cgithub_shortcode'));
         add_shortcode('xgithub',                array($this, 'xgithub_shortcode'));
@@ -413,7 +449,7 @@ class Shortcodes
         add_shortcode('xgithub_ajax_response',  array($this, 'xgithub_ajax_response_shortcode'));
         add_shortcode('xsyntax',                array($this, 'xsyntax_shortcode'));
 
-        foreach ($xartaLangs as $searchLang)
+        foreach ($this->xartaLangs as $searchLang)
         {
             add_shortcode($searchLang, function( $atts = [], $content = '') use ($searchLang)
             {
@@ -462,7 +498,7 @@ class Shortcodes
         
 
         // TODO TODO TODO HERE HERE HERE WILL BECOME INTERNAL REFERENCE?
-        return xarta_highlight( $atts );     
+        return $this->xartaSyntaxHLoutput->xarta_highlight( $atts );     
     }
     
 
@@ -524,138 +560,107 @@ class Shortcodes
 
         // for this shortcode (and aliases), we get the code inbetween shortcode tags
         // e.g. $content.  But xarta_highlight looks for array member 'outputcode'
-        $atts['outputcode'] = xarta_remove_xprotect_pre_tags($content);
+        $atts['outputcode'] = TheContent::xarta_remove_xprotect_pre_tags($content);
         //$atts['outputcode'] = $content;
-        return xarta_highlight( $atts );
+        return $this->xartaSyntaxHLoutput->xarta_highlight( $atts );
+    }
+}
+
+    /**             *********\
+    *               * OUTPUT *         * GENERATE THE RESPONSE *
+    *               **********
+    *
+    *   although any of the shortcodes could be used individually, 
+    *   they mostly resolve to or get passed to:
+    *
+    *           __________________________________________________
+    *           * xsyntax_shortcode( $atts = [], $content = '' )
+    *           * xgithub_shortcode( $atts )
+    *           --------------------------------------------------
+    *
+    *   ... they both eventually call xarta_hightlight ( $atts )
+    *
+    *   This is where syntax highlighting, colorbox/lightbox, and width/font buttons etc.
+    *   get put together for output.
+    *
+    */
+
+class Output
+{
+    public function __construct()
+    {
+
+    }
+
+    public function xarta_highlight( $atts ) 
+    {
+        //echo "Debug, xarta_highlight, \$atts array:<br /><br />";
+        //printArray($atts);
+
+        do_action('x_enqueue_syntax_scripts');
+
+        $atts = css_classname_and_instance_id($atts);
+        $instanceID = $atts['instanceid'];
+
+        // $options below requires that $atts have been massaged
+        extract( attribute_massage( $atts )); // e.g. $outputcode is extracted, $options etc.
+
+        // options - either empty strings or key: 'value' pairs with dash-case keys
+        $options = $classname.$title.$firstline.$gutter.$autolinks.$highlight.$htmlscript.$smarttabs.$tabsize;
+        
+        $testoutput = $outputcode; // capture before anything done to it
+
+        $outputcode = x_squarebrackets_to_guid($outputcode); // prevent shortcodes in code
+                                                            // from being evaluated in do_shortcode()
+        $outputcode = fix_reference_issue($outputcode);      // TODO check if still necessary
+
+        // my attribute $escapelt
+        if($escapelt === 'true')
+        {
+            $outputcode = x_escape_lt($outputcode);
+        }
+
+        // my attribute $buttons
+        if($buttons === 'true')
+        {
+            $buttons = ' xarta-code-buttons ' . $instanceID;
+        }
+        else
+        {
+            $buttons = '';
+        }
+
+        // xarta-syntaxhighlighter-site-footer.js will look for this special <pre>
+        $syntax = '<pre id="'.$instanceID.'" class="brush: \''.$lang.'\'; '.$options.' ">'.$outputcode.'</pre>';
+        
+        // nb: xarta-big-code class set in JavaScript syntaxhighlighterConfig default className
+        //     xarta-syntaxhighlighter-site-footer.js will include as a class in output div
+        $wrap_classes = "xarta-syntax-highlight $buttons"; // my wrapping div
+
+        // my attribute $lightbox
+        if($lightbox === 'true')
+        {
+            $colorboxID = trim(strval(uniqid()));
+            $wrap = '<div class="'.$wrap_classes.'"><div id="wp_colorbox_'.$colorboxID.'">'.$syntax.'</div></div>';
+            $start = '<p style="clear:both;">...</p><p><span style="float:right;"> ';
+            $codeoutput = do_shortcode($start . ' [wp_colorbox_media url="#wp_colorbox_'.$colorboxID.'" type="inline" hyperlink="" alt="CODE ZOOM"] ' . "</span></p>$wrap");
+        }
+        else if($testmode === 'true')
+        {
+            $codeoutput = '<pre>'.$testoutput.'</pre>';
+        }
+        else
+        {
+            $codeoutput = '<div class="'.$wrap_classes.'">'.$syntax.'</div>';
+        }
+    
+
+
+        return x_guid_to_squarebrackets($codeoutput).$caption;
     }
 }
 
 
+$xartaSyntaxHLenqueue = new Enqueue();
+$xartaSyntaxHLthecontent = new TheContent($xartaLangs);
 $xartaSyntaxHLshortcodes = new Shortcodes($xartaLangs);
-
-
-
-function xarta_highlight( $atts ) 
-{
-    //echo "Debug, xarta_highlight, \$atts array:<br /><br />";
-    //printArray($atts);
-
-    do_action('x_enqueue_syntax_scripts');
-
-    $atts = css_classname_and_instance_id($atts);
-    $instanceID = $atts['instanceid'];
-
-    // $options below requires that $atts have been massaged
-    extract( attribute_massage( $atts )); // e.g. $outputcode is extracted, $options etc.
-
-    // options - either empty strings or key: 'value' pairs with dash-case keys
-    $options = $classname.$title.$firstline.$gutter.$autolinks.$highlight.$htmlscript.$smarttabs.$tabsize;
-    
-    $testoutput = $outputcode; // capture before anything done to it
-
-    $outputcode = x_squarebrackets_to_guid($outputcode); // prevent shortcodes in code
-                                                         // from being evaluated in do_shortcode()
-    $outputcode = fix_reference_issue($outputcode);      // TODO check if still necessary
-
-    // my attribute $escapelt
-    if($escapelt === 'true')
-    {
-        $outputcode = x_escape_lt($outputcode);
-    }
-
-    // my attribute $buttons
-    if($buttons === 'true')
-    {
-        $buttons = ' xarta-code-buttons ' . $instanceID;
-    }
-    else
-    {
-        $buttons = '';
-    }
-
-    // xarta-syntaxhighlighter-site-footer.js will look for this special <pre>
-    $syntax = '<pre id="'.$instanceID.'" class="brush: \''.$lang.'\'; '.$options.' ">'.$outputcode.'</pre>';
-    
-    // nb: xarta-big-code class set in JavaScript syntaxhighlighterConfig default className
-    //     xarta-syntaxhighlighter-site-footer.js will include as a class in output div
-    $wrap_classes = "xarta-syntax-highlight $buttons"; // my wrapping div
-
-    // my attribute $lightbox
-    if($lightbox === 'true')
-    {
-        $colorboxID = trim(strval(uniqid()));
-        $wrap = '<div class="'.$wrap_classes.'"><div id="wp_colorbox_'.$colorboxID.'">'.$syntax.'</div></div>';
-        $start = '<p style="clear:both;">...</p><p><span style="float:right;"> ';
-        $codeoutput = do_shortcode($start . ' [wp_colorbox_media url="#wp_colorbox_'.$colorboxID.'" type="inline" hyperlink="" alt="CODE ZOOM"] ' . "</span></p>$wrap");
-    }
-    else if($testmode === 'true')
-    {
-        $codeoutput = '<pre>'.$testoutput.'</pre>';
-    }
-    else
-    {
-        $codeoutput = '<div class="'.$wrap_classes.'">'.$syntax.'</div>';
-    }
-  
-
-
-    return x_guid_to_squarebrackets($codeoutput).$caption;
-}
-
-
-
-
-
-
-/* TEMP NOTES FOR REFERENCE
-
-class XartaSyntaxHL
-{
-    public $bar;
-    
-    public function __construct() {
-        $this->bar = function() {
-            //return 42;
-        };
-    }
-}
-
-$xSyntaxHL = new XartaSyntaxHL();
-
-// as of PHP 5.3.0:
-$func = $xSyntaxHL->bar;
-//echo $func(), PHP_EOL;
-
-// alternatively, as of PHP 7.0.0:
-//echo ($xSyntaxHL->bar)(), PHP_EOL;
-
-
-
-*/
-
-
-/* OOPS - MAKES THINGS WORSE ... TODO INVESTIGATE ------------------------------
-*/
-// including this here as seems relevant to doing WordPress posts on Development
-// where additional control over output is important:
-// https://ikreativ.com/stop-wordpress-removing-html/
-function xarta_ikreativ_tinymce_fix( $init )
-{
-    // html elements being stripped
-    $init['extended_valid_elements'] = 'div[*], article[*]';
-
-    // don't remove line breaks
-    $init['remove_linebreaks'] = false;
-
-    // convert newline characters to BR
-    $init['convert_newlines_to_brs'] = false;
-
-    // don't remove redundant BR
-    $init['remove_redundant_brs'] = false;
-
-    // pass back to wordpress
-    return $init;
-}
-//add_filter('tiny_mce_before_init', 'xarta_ikreativ_tinymce_fix');
-/*
-*/ // ------------------------------------------------------------------------
