@@ -861,14 +861,14 @@ class Sanitise
         // supply missing attributes from $atts_default (and limit to atts_default)
         $atts = shortcode_atts( $atts_default, $atts );
 
-        $atts = $this->true_false_sanitization($atts, 'gutter', 'gutter', $gutter_default, self::SYNTAX_DEFAULT_TRUE, self::NOT_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'autolinks', 'auto-links', $autolinks_default, self::SYNTAX_DEFAULT_TRUE, self::NOT_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'htmlscript', 'html-script', $htmlscript_default, self::SYNTAX_DEFAULT_FALSE, self::NOT_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'smarttabs', 'smart-tabs', $smarttabs_default, self::SYNTAX_DEFAULT_TRUE, self::NOT_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'escapelt', 'escape-lt', $escapelt_default, self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'buttons', 'buttons', $buttons_default, self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'lightbox', 'lightbox', $lightbox_default, self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'testmode', 'testmode', $testmode_default, self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'gutter',     'gutter',       $gutter_default,        self::SYNTAX_DEFAULT_TRUE,  self::NOT_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'autolinks',  'auto-links',   $autolinks_default,     self::SYNTAX_DEFAULT_TRUE,  self::NOT_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'htmlscript', 'html-script',  $htmlscript_default,    self::SYNTAX_DEFAULT_FALSE, self::NOT_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'smarttabs',  'smart-tabs',   $smarttabs_default,     self::SYNTAX_DEFAULT_TRUE,  self::NOT_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'escapelt',   'escape-lt',    $escapelt_default,      self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'buttons',    'buttons',      $buttons_default,       self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'lightbox',   'lightbox',     $lightbox_default,      self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'testmode',   'testmode',     $testmode_default,      self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
 
 
         if (!$this->accept_lang($atts['lang']))
