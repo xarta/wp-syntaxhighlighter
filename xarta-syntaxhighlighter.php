@@ -76,10 +76,10 @@ if ( ! defined( 'WPINC' ) ) {
     *               * ALIASES *         * ALIAS ARRAY FOR SHORTCODES *
     *               ***********
     *
-    * c++ causes a problem in the admin section with tiny mce & add media button
-    * (so use cpp instead ... but c# seems ok so far)
-    * Only include aliases that the JavaScript SyntaxHighlighter knows about!
-    * Programmatically add shortcodes based on this array later
+    *   c++ causes a problem in the admin section with tiny mce & add media button
+    *   (so use cpp instead ... but c# seems ok so far)
+    *   Only include aliases that the JavaScript SyntaxHighlighter knows about!
+    *   Programmatically add shortcodes based on this array later
     *
     ****************************************************************************************/
     $xartaLangs = array('code', 'bash', 'cpp', 'c#', 'php', 'sql', 'js', 'css', 'xml');
@@ -90,7 +90,7 @@ if ( ! defined( 'WPINC' ) ) {
     *               * GITHUB  *         * ONLY ALLOW THESE GITHUB USERS IN RAW REPO PATHS *
     *               ***********
     *
-    * When retrieving raw GitHub files, only permit files from repos by these users:
+    *   When retrieving raw GitHub files, only permit files from repos by these users:
     *
     ****************************************************************************************/
     $githubUsers = array('davros1973', 'xarta');
@@ -102,8 +102,8 @@ if ( ! defined( 'WPINC' ) ) {
     *               * ENQUEUE *         * ENQUEUE JS, CSS, & CHECK AJAX TEMPLATE EXISTS *
     *               ***********
     *
-    * Split the enqueing as not everything needed at 'wp_enqueue_scripts' time
-    * Generate a page template for my own ajax function, if it doesn't exist or is old expired version'
+    *   Split the enqueing as not everything needed at 'wp_enqueue_scripts' time
+    *   Generate a page template for my own ajax function, if it doesn't exist or is old expired version'
     *
     */
 
@@ -435,9 +435,9 @@ class TheContent
     *               * SHORTCODES *         * add_shortcode *
     *               **************
     *
-    * shortcodes for inline syntax highlighting, github raw file highlighting,
-    * and github raw file retrieved by ajax calls (multiple within a post for example)
-    * highlighting.  All the aliases use xsyntax_shortcode
+    *   Shortcodes for inline syntax highlighting, github raw file highlighting,
+    *   and github raw file retrieved by ajax calls (multiple within a post for example)
+    *   highlighting.  All the aliases use xsyntax_shortcode
     *
     */
 
@@ -472,13 +472,14 @@ class Shortcodes
 
     private function github_get_url($atts)
     {
+        //HelperFuncs::printArray($atts);
         // TODO'S
         //  - $raw ... check well-formed, no http:// etc. and 200 response?
 
         // hard-code here as not sure of security risk of php file_get_contents 
         // ... available to shortcode
         $github_base_url = 'https://raw.githubusercontent.com/';
-        $github_user = constrain_github_user($atts['github_user']);
+        $github_user = $this->xartaSyntaxHLsanitise->constrain_github_user($atts);
         $repo_raw_file = $atts['raw'];
         return  "$github_base_url$github_user/$repo_raw_file";
     }
@@ -652,7 +653,7 @@ class Output
         $instanceID = $atts['instanceid'];
 
         // $options below requires that $atts have been massaged
-        extract( attribute_massage( $atts )); // e.g. $outputcode is extracted, $options etc.
+        extract( $this->xartaSyntaxHLsanitise->attribute_massage( $atts )); // e.g. $outputcode is extracted, $options etc.
 
         // options - either empty strings or key: 'value' pairs with dash-case keys
         $options = $classname.$title.$firstline.$gutter.$autolinks.$highlight.$htmlscript.$smarttabs.$tabsize;
@@ -702,16 +703,30 @@ class Output
         {
             $codeoutput = '<div class="'.$wrap_classes.'">'.$syntax.'</div>';
         }
-    
-
 
         return $this->x_guid_to_squarebrackets($codeoutput).$caption;
     }
 }
 
+    /**             ************\
+    *               * SANITISE   *         * santisation constraints of $atts *
+    *               **************
+    *
+    *   As any attributes can be used with the shortcode, limit to known accepted attributes.
+    *   Some of the know attributes only permit a finite set of values.
+    *   TODO: ESCAPE some of the attributes that might allow script injection etc.
+    *       Not a problem (for me) right now as only I post on this site.
+    *
+    */
 
 class Sanitise
 {
+    const THIS_IS_MY_ATT = true;
+    const NOT_MY_ATT = false;
+
+    const SYNTAX_DEFAULT_TRUE = true;
+    const SYNTAX_DEFAULT_FALSE = false;
+
     private $xartaLangs;
     private $githubUsers;
     private $githubUserDefault;
@@ -722,6 +737,42 @@ class Sanitise
         $this->githubUsers = $githubUsers;
         $this->githubUserDefault = $githubUserDefault;
     }
+
+    private function true_false_sanitization($atts, $att_key, $att_dash_case, $my_default, $syntax_default, $my_att)
+    {
+
+        // https://github.com/syntaxhighlighter/syntaxhighlighter/wiki/Configuration     
+        // I also have my own attributes to sanitize and pass along.
+
+        if( !($atts[$att_key] === 'true') && !($atts[$att_key] === 'false'))
+        {
+            if( ($my_default === $syntax_default) && !$my_att)
+            {
+                $atts[$att_key] = ''; // let front-end syntax client assume default
+            }
+            else if( !$my_att)
+            {
+                $atts[$att_key] = $att_dash_case.': \''.$my_default.'\'; ';
+            }  
+            else
+            {
+                $atts[$att_key] = $my_default;
+            }
+        }
+        else if( !$my_att)
+        {
+            $atts[$att_key] = $att_dash_case.': \''.$atts[$att_key].'\'; ';
+        } 
+        else
+        {
+            // my attribute already set to true or false
+        }  
+
+        return $atts;
+    }
+
+
+
     /**
     *  BEFORE looking at $atts array generally, the classname is scrutinised
     *         as it might need modifying. If supplied, it overrides the default.
@@ -756,267 +807,227 @@ class Sanitise
                         // except made all keys lower-case
     }
 
- 
-}
-
-
-
-
-
-
-const THIS_IS_MY_ATT = true;
-const NOT_MY_ATT = false;
-
-const SYNTAX_DEFAULT_TRUE = true;
-const SYNTAX_DEFAULT_FALSE = false;
-
-function attribute_massage ($atts)
-{
-    $raw_default = 'my-wp-code-snippets/master/default.php';
-    $github_user_default = constrain_github_user('tell-me-default');
-    $outputcode_default = '';
-    $lang_default = 'code';
-    $light_default = '0';
-    $caption_default = '';
-    $title_default = '';
-    $autolinks_default = 'true';
-    $classname_default = '';
-    $firstline_default = '1';
-    $gutter_default = 'true';
-    $highlight_default = '';
-    $htmlscript_default = 'false';
-    $smarttabs_default = 'true';
-    $tabsize_default = '4';
-    $escapelt_default = 'true';
-    $buttons_default = 'true';
-    $lightbox_default = 'true';
-    $testmode_default = 'false';
-
-
-    // for xarta_highlight function
-    // WARNING WARNING:  will change semantics of some attributes
-    // e.g. 'autolinks' => 'true' will become 'auto-links: 'true' ready for output insertion
-    $atts_default = array(
-            'raw' => $raw_default,
-            'github_user' => $github_user_default,
-            'outputcode' => $outputcode_default, // empty if using xgithub shortcode (which will populate it)
-            'lang' => $lang_default,
-            'light' => $light_default,
-            'caption' => $caption_default,
-            'title' => $title_default,
-            'autolinks' => $autolinks_default,
-            'classname' => $classname_default,
-            'firstline' => $firstline_default,
-            'gutter' => $gutter_default,
-            'highlight' => $highlight_default,
-            'htmlscript' => $htmlscript_default,
-            'smarttabs' => $smarttabs_default,
-            'tabsize' => $tabsize_default,
-            'escapelt' => $escapelt_default,
-            'buttons' => $buttons_default,
-            'lightbox' => $lightbox_default,
-            'testmode' => $testmode_default
-    );
-
-    // normalize attribute keys, lowercase
-    // $atts = array_change_key_case( (array)$atts, CASE_LOWER); // already done
-
-    // supply missing attributes from $atts_default (and limit to atts_default)
-    $atts = shortcode_atts( $atts_default, $atts );
-  	
-    $atts = true_false_sanitization($atts, 'gutter', 'gutter', $gutter_default, SYNTAX_DEFAULT_TRUE, NOT_MY_ATT);
-    $atts = true_false_sanitization($atts, 'autolinks', 'auto-links', $autolinks_default, SYNTAX_DEFAULT_TRUE, NOT_MY_ATT);
-    $atts = true_false_sanitization($atts, 'htmlscript', 'html-script', $htmlscript_default, SYNTAX_DEFAULT_FALSE, NOT_MY_ATT);
-    $atts = true_false_sanitization($atts, 'smarttabs', 'smart-tabs', $smarttabs_default, SYNTAX_DEFAULT_TRUE, NOT_MY_ATT);
-    $atts = true_false_sanitization($atts, 'escapelt', 'escape-lt', $escapelt_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
-    $atts = true_false_sanitization($atts, 'buttons', 'buttons', $buttons_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
-    $atts = true_false_sanitization($atts, 'lightbox', 'lightbox', $lightbox_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
-    $atts = true_false_sanitization($atts, 'testmode', 'testmode', $testmode_default, SYNTAX_DEFAULT_FALSE, THIS_IS_MY_ATT);
-
-
-    if (!accept_lang($atts['lang']))
+    public function attribute_massage ($atts)
     {
-        $atts['lang'] = $lang_default; 
-    }
+        $raw_default = 'my-wp-code-snippets/master/default.php';
+        $github_user_default = $this->githubUserDefault;
+        $outputcode_default = '';
+        $lang_default = 'code';
+        $light_default = '0';
+        $caption_default = '';
+        $title_default = '';
+        $autolinks_default = 'true';
+        $classname_default = '';
+        $firstline_default = '1';
+        $gutter_default = 'true';
+        $highlight_default = '';
+        $htmlscript_default = 'false';
+        $smarttabs_default = 'true';
+        $tabsize_default = '4';
+        $escapelt_default = 'true';
+        $buttons_default = 'true';
+        $lightbox_default = 'true';
+        $testmode_default = 'false';
 
 
-    // compatible with standard WordPress Syntaxhighlighter plug-in attribute "light"
-    // override "gutter"
-    if ($atts['light'] === '1')
-    {
-        $atts['gutter'] ='gutter: \'false\'; '; 
-    }
-    else if ($atts['light'] === '0')
-    {
-        $atts['gutter'] = 'gutter: \'true\'; '; 
-    }
-    else
-    {
-        $atts['light'] = $light_default;
-    }
+        // for xarta_highlight function
+        // WARNING WARNING:  will change semantics of some attributes
+        // e.g. 'autolinks' => 'true' will become 'auto-links: 'true' ready for output insertion
+        $atts_default = array(
+                'raw' => $raw_default,
+                'github_user' => $github_user_default,
+                'outputcode' => $outputcode_default, // empty if using xgithub shortcode (which will populate it)
+                'lang' => $lang_default,
+                'light' => $light_default,
+                'caption' => $caption_default,
+                'title' => $title_default,
+                'autolinks' => $autolinks_default,
+                'classname' => $classname_default,
+                'firstline' => $firstline_default,
+                'gutter' => $gutter_default,
+                'highlight' => $highlight_default,
+                'htmlscript' => $htmlscript_default,
+                'smarttabs' => $smarttabs_default,
+                'tabsize' => $tabsize_default,
+                'escapelt' => $escapelt_default,
+                'buttons' => $buttons_default,
+                'lightbox' => $lightbox_default,
+                'testmode' => $testmode_default
+        );
+        
+        // normalize attribute keys, lowercase
+        // $atts = array_change_key_case( (array)$atts, CASE_LOWER); // already done
 
-    if(!empty($atts['caption']))
-    {
-        // TODO (trim etc. maybe), check length etc.
-        // ... escape?
-        // TODO Any injection possibilities here?
-        $atts['caption'] = '<div class="xcaption">'.$atts['caption'].'</div>';
-    }
-    else
-    {
-        // I know, I know ... css vs content ... just seems
-        // convenient to do this here.  If no caption, then
-        // I want a line-break between the bottom of the code
-        // and succeeding content that's not stripped-out or mangled
-        // ... I think it's good to see the <br /> in source too;
-        // ... I think there's some semantic meaning of sorts
-        $atts['caption'] = '<br />';
-    }
+        // supply missing attributes from $atts_default (and limit to atts_default)
+        $atts = shortcode_atts( $atts_default, $atts );
 
-    if(!empty($atts['title']))
-    {
-        // TODO (trim etc. maybe), check length etc.
-        // TODO ... escape?
-        // TODO Any injection possibilities here?
-        $atts['title'] = 'title: \''.$atts['title'].'\'; ';
-    }
-    else
-    {
-        $atts['title'] = $title_default;
-    }
+        $atts = $this->true_false_sanitization($atts, 'gutter', 'gutter', $gutter_default, self::SYNTAX_DEFAULT_TRUE, self::NOT_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'autolinks', 'auto-links', $autolinks_default, self::SYNTAX_DEFAULT_TRUE, self::NOT_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'htmlscript', 'html-script', $htmlscript_default, self::SYNTAX_DEFAULT_FALSE, self::NOT_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'smarttabs', 'smart-tabs', $smarttabs_default, self::SYNTAX_DEFAULT_TRUE, self::NOT_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'escapelt', 'escape-lt', $escapelt_default, self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'buttons', 'buttons', $buttons_default, self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'lightbox', 'lightbox', $lightbox_default, self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'testmode', 'testmode', $testmode_default, self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
 
 
-    if(!empty($atts['classname']))
-    {
-        // TODO (check legal/valid sanitisation)
-        $atts['classname'] = 'class-name: \''.$atts['classname'].'\'; ';
-    }
-    else
-    {
-        // default set anyway in site header with JavaScript
-        // syntaxhighlighterConfig ... className, so leave empty
-        // $atts['classname'] = $classname_default;
-    }
-
-
-
-
-
-    // TODO - FIND OUT IF CONDITIONAL SHORTCUTS IN PHP - PERSONALLY TEST
-    // TODO - FACTOR OUT THIS FUNCTION FOR BOTH firstline AND tabsize
-    if( is_numeric($atts['firstline']) && is_int($atts['firstline']))
-    {
-        $atts['firstline'] = 'first-line: \''.$atts['firstline'].'\'; ';
-    }
-    else
-    {
-        $atts['firstline'] = '';    // default is 1 anyway!
-                                    // I mean, on the client side
-        // $atts['firstline'] = 'first-line: \''.$firstline_default.'\'; ';;
-    }
-
-    if( is_numeric($atts['tabsize']) && is_int($atts['tabsize']))
-    {
-        // TODO check limits on tabsize e.g. 1 to 10 or something?
-        $atts['tabsize'] = 'tab-size: \''.$atts['tabsize'].'\'; ';
-    }
-    else
-    {
-        $atts['tabsize'] = '';      // default is 4 anyway!
-                                    // I mean, on the client side
-        // $atts['firstline'] = 'first-line: \''.$firstline_default.'\'; ';;
-    }
-
-    if(!empty($atts['highlight']))
-    {
-        // TODO ... THIS ONE IS A BIT TRICKY
-        $atts['highlight'] = 'highlight: \''.$atts['highlight'].'\'; ';
-    }
-
-
-    return $atts;
-
-}
-
-function true_false_sanitization($atts, $att_key, $att_dash_case, $my_default, $syntax_default, $my_att)
-{
-
-    // https://github.com/syntaxhighlighter/syntaxhighlighter/wiki/Configuration     
-    // I also have my own attributes to sanitize and pass along.
-
-    if( !($atts[$att_key] === 'true') && !($atts[$att_key] === 'false'))
-    {
-        if( ($my_default === $syntax_default) && !$my_att)
+        if (!$this->accept_lang($atts['lang']))
         {
-            $atts[$att_key] = ''; // let front-end syntax client assume default
+            $atts['lang'] = $lang_default; 
         }
-        else if( !$my_att)
+
+
+        // compatible with standard WordPress Syntaxhighlighter plug-in attribute "light"
+        // override "gutter"
+        if ($atts['light'] === '1')
         {
-            $atts[$att_key] = $att_dash_case.': \''.$my_default.'\'; ';
-        }  
+            $atts['gutter'] ='gutter: \'false\'; '; 
+        }
+        else if ($atts['light'] === '0')
+        {
+            $atts['gutter'] = 'gutter: \'true\'; '; 
+        }
         else
         {
-            $atts[$att_key] = $my_default;
+            $atts['light'] = $light_default;
         }
+
+        if(!empty($atts['caption']))
+        {
+            // TODO trim, check-length, escape
+
+            /** **********************************************************
+             *  DAVE ... IF I ALLOWED OTHERS TO POST & USE THE SHORTCODE
+             *           THEN THEY COULD INJECT SCRIPT HERE? SO ESCAPE !!!
+             *************************************************************
+            */
+
+            $atts['caption'] = '<div class="xcaption">'.$atts['caption'].'</div>';
+        }
+        else
+        {
+            // I know, I know ... css vs content ... just seems
+            // convenient to do this here.  If no caption, then
+            // I want a line-break between the bottom of the code
+            // and succeeding content that's not stripped-out or mangled
+            // ... I think it's good to see the <br /> in source too;
+            // ... I think there's some semantic meaning of sorts
+            $atts['caption'] = '<br />';
+        }
+
+        if(!empty($atts['title']))
+        {
+            // TODO trim, check-length, escape
+
+            /** **********************************************************
+             *  DAVE ... IF I ALLOWED OTHERS TO POST & USE THE SHORTCODE
+             *           THEN THEY COULD INJECT SCRIPT HERE? SO ESCAPE !!!
+             *************************************************************
+            */
+            $atts['title'] = 'title: \''.$atts['title'].'\'; ';
+        }
+        else
+        {
+            $atts['title'] = $title_default;
+        }
+
+
+        if(!empty($atts['classname']))
+        {
+            // TODO (check legal/valid sanitisation)
+            $atts['classname'] = 'class-name: \''.$atts['classname'].'\'; ';
+        }
+        else
+        {
+            // default set anyway in site header with JavaScript
+            // syntaxhighlighterConfig ... className, so leave empty
+            // $atts['classname'] = $classname_default;
+        }
+
+
+        // TODO - FIND OUT IF CONDITIONAL SHORTCUTS IN PHP - PERSONALLY TEST
+        // TODO - FACTOR OUT THIS FUNCTION FOR BOTH firstline AND tabsize
+        if( is_numeric($atts['firstline']) && is_int($atts['firstline']))
+        {
+            $atts['firstline'] = 'first-line: \''.$atts['firstline'].'\'; ';
+        }
+        else
+        {
+            $atts['firstline'] = '';    // default is 1 anyway!
+                                        // I mean, on the client side
+            // $atts['firstline'] = 'first-line: \''.$firstline_default.'\'; ';;
+        }
+
+        if( is_numeric($atts['tabsize']) && is_int($atts['tabsize']))
+        {
+            // TODO check limits on tabsize e.g. 1 to 10 or something?
+            $atts['tabsize'] = 'tab-size: \''.$atts['tabsize'].'\'; ';
+        }
+        else
+        {
+            $atts['tabsize'] = '';      // default is 4 anyway!
+                                        // I mean, on the client side
+            // $atts['firstline'] = 'first-line: \''.$firstline_default.'\'; ';;
+        }
+
+        if(!empty($atts['highlight']))
+        {
+            // TODO ... THIS ONE IS A BIT TRICKY
+            $atts['highlight'] = 'highlight: \''.$atts['highlight'].'\'; ';
+        }
+
+        return $atts;
+
     }
-    else if( !$my_att)
+
+    public function accept_lang( $lang )
     {
-        $atts[$att_key] = $att_dash_case.': \''.$atts[$att_key].'\'; ';
-    } 
-    else
-    {
-        // my attribute already set to true or false
-    }  
-
-    return $atts;
-
-}
-
-
-function accept_lang( $lang )
-{
-  	// limit available brushes to these aliases, default to "code" 
-    // $xartaLangs is global  (at least to plugin)
-    global $xartaLangs;
- 	
-  	$lang_found = false;
-	  
-	for($i = 0; $i < count($xartaLangs); $i++)
-	{
-	  	if ( $xartaLangs[$i] === $lang)
-		{
-		 	$lang_found = true; 
-		  	break;
-		}
-	}
-  
-  	return $lang_found;
-}
-
-
-function constrain_github_user( $githubUser)
-{
-    global $githubUsers;
-    global $githubUserDefault;
-
-
-
- 	for($i = 0; $i < count($githubUsers); $i++)
-	{
-	  	if ( $githubUsers[$i] === $githubUser)
-		{
-		 	return $githubUser;
-		}
-	}   
+        // limit available brushes to these aliases, default to "code" 
+        
+        $lang_found = false;
+        
+        for($i = 0; $i < count($this->xartaLangs); $i++)
+        {
+            if ( $this->xartaLangs[$i] === $lang)
+            {
+                $lang_found = true; 
+                break;
+            }
+        }
     
-    return $githubUserDefault;
+        return $lang_found;
+    }
+
+    public function constrain_github_user( $atts)
+    {
+
+        $atts_default = array(
+                'github_user' => $this->githubUserDefault,
+        );
+        
+        $atts = shortcode_atts( $atts_default, $atts );
+
+
+        for($i = 0; $i < count($this->githubUsers); $i++)
+        {
+            if ( $this->githubUsers[$i] === $atts['github_user'])
+            {
+                return $atts['github_user'];
+            }
+        }   
+        
+        return $this->githubUserDefault;
+    }
 }
 
-
-
-
-
-
+    /**             ***************\
+    *               * HELPER FUNCS  *         * useful little functions (mostly static) *
+    *               *****************
+    *
+    *   Any function I use more than once or twice that I might use again,
+    *   but, what don't really fit in any of the other classes
+    *
+    */
 
 class HelperFuncs
 {
@@ -1030,6 +1041,7 @@ class HelperFuncs
     * $pad='' gives $pad a default value, meaning we don't have 
     * to pass HelperFuncs::printArray a value for it if we don't want to if we're
     * happy with the given default value (no padding)
+    * (I use this for printing out all of $atts for example, for debuggin)
     */
     public static function printArray($array, $pad='')
     {
