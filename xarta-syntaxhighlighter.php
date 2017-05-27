@@ -371,6 +371,7 @@ class TheContent
                     $content = substr_replace ($content, $pre_code_code_pre, $start, $end-$start);
 
                     // if more $content to look at, go round and round
+                    // NOTE: &lt; and &#91; must only require 1 "character" each as $end-$start works
                 }
                 else
                 {
