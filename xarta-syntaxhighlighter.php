@@ -115,13 +115,13 @@ class Enqueue
     public function __construct()
     {
         // REGISTER all scripts,  & enqueue 'xarta_global_js' (only) for every page
-        add_action('wp_enqueue_scripts', array($this, 'enqueueAssetsEveryTime'));
+        add_action('wp_enqueue_scripts',        array($this, 'enqueueAssetsEveryTime'));
 
         // nb:  only enqueue / do_action('x_enqueue_syntax_scripts'); in:
         //      xgithub_ajax_shortcode    ... in shortcodes class
         //      xarta_highlight           ... in output class
-        add_action('x_enqueue_syntax_scripts', array($this, 'enqueueAssetsShortCode'));
-        add_action('x_enqueue_syntax_scripts', array($this, 'xarta_setup_syntax_ajax_single_template'));
+        add_action('x_enqueue_syntax_scripts',  array($this, 'enqueueAssetsShortCode'));
+        add_action('x_enqueue_syntax_scripts',  array($this, 'xarta_setup_syntax_ajax_single_template'));
         // add_action('x_enqueue_syntax_scripts', array($this, 'xarta_setup_syntax_ajax_post'));  // TODO
     }
 
@@ -131,22 +131,32 @@ class Enqueue
         // -----
 
         // create my own version codes
-        $xarta_global_js_ver  = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-global-functions.js' ));
-        $syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'theme.css' ));
-        $x_syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-syntaxhighlighter-site-footer.css' ));
+        $xarta_global_js_ver  =     date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-global-functions.js' ));
+        $syntax_theme_css_ver =     date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'theme.css' ));
+        $x_syntax_theme_css_ver =   date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-syntaxhighlighter-site-footer.css' ));
             
         // REGISTER:
-        wp_register_script( 'xarta_global_js', plugins_url( 'xarta-global-functions.js', __FILE__ ), array(), $xarta_global_js_ver );
-        wp_register_script('xarta_syntaxhighlighter_site_footer', plugins_url('xarta-syntaxhighlighter-site-footer.js', __FILE__ ), 
+        wp_register_script( 'xarta_global_js', 
+            plugins_url( 'xarta-global-functions.js', __FILE__ ), 
+            array(), $xarta_global_js_ver );
+        
+        wp_register_script('xarta_syntaxhighlighter_site_footer', 
+            plugins_url('xarta-syntaxhighlighter-site-footer.js', __FILE__ ), 
             array('syntaxhighlighter'), true );
 
-        wp_register_script('syntaxhighlighter', plugins_url( 'syntaxhighlighter.js', __FILE__ ), array('xarta_global_js'));
+        wp_register_script('syntaxhighlighter', 
+            plugins_url( 'syntaxhighlighter.js', __FILE__ ), 
+            array('xarta_global_js'));
 
-        wp_register_style( 'syntaxhighlighter_css',    plugins_url( 'theme.css',    __FILE__ ), array(),   $syntax_theme_css_ver, 'all' );
-        wp_register_style( 'x_syntaxhighlighter_css',    plugins_url( 'xarta-syntaxhighlighter-site-footer.css',    __FILE__ ), 
+        wp_register_style( 'syntaxhighlighter_css',    
+            plugins_url( 'theme.css',    __FILE__ ), 
+            array(),   $syntax_theme_css_ver, 'all' );
+        
+        wp_register_style( 'x_syntaxhighlighter_css',    
+            plugins_url( 'xarta-syntaxhighlighter-site-footer.css',    __FILE__ ), 
             array('syntaxhighlighter_css'),   $x_syntax_theme_css_ver, 'all' );
 
-        // Only script I enqueue straight-away
+        // ENQUEUE: Only script I enqueue straight-away
         wp_enqueue_script( 'xarta_global_js' );   
     }
 
@@ -315,7 +325,9 @@ class TheContent
     public function __construct($xartaLangs)
     {
             $this->xartaCodesToCheck = $xartaLangs;
-            add_filter('the_content', array($this, 'xarta_before_the_content_normal_filters'), 4); // higher priority
+
+            // high priority / early filter "4"
+            add_filter('the_content', array($this, 'xarta_before_the_content_normal_filters'), 4);
     }
 
     public function xarta_before_the_content_normal_filters($content)
@@ -342,12 +354,13 @@ class TheContent
 
                 if ($end !== FALSE)
                 {
-                    $start = $start + 11;   // i.e. + characters for <  p  r  e  >  <  c  o  d  e  > 
-                                            //                      01 02 03 04 05 06 07 08 09 10 11
-                                            // $end is already at beginning of </code></pre>
+                    $start = $start + 11;   // i.e. + characters for <  p  r  e  >  <  c  o  d  e  >  X
+                                            //                      00 01 02 03 04 05 06 07 08 09 10 11
+                                            // $end is already at beginning of </code></pre> so $end-$start
+                                            // sums will be right ...
                                             // so - like the filling of the sandwich ...
                     $pre_code_code_pre = substr($content, $start, $end-$start);
-                    $pre_code_code_pre = str_replace('<', '&lt;', $pre_code_code_pre);
+                    $pre_code_code_pre = str_replace('<', '&lt;',  $pre_code_code_pre);
                     $pre_code_code_pre = str_replace('[', '&#91;', $pre_code_code_pre);
                     $content = substr_replace ($content, $pre_code_code_pre, $start, $end-$start);
 
@@ -371,24 +384,31 @@ class TheContent
         if($potentialShortcode !== FALSE)
         {
 
-            array_push($this->xartaCodesToCheck, "xsyntax"); // additional shortcode to check (not language)
+            array_push($this->xartaCodesToCheck, "xsyntax");    // additional shortcode to check
+                                                                // (doesn't count as language alias)
 
             foreach ($this->xartaCodesToCheck as $searchLang)
             {
-                //$searchLang = 'code';
+                // e.g. $searchLang = 'code' or $searchLang = 'js' or $sesarchLane= 'c#' etc.
                 if(strpos($content,'['.$searchLang, $potentialShortcode) !== FALSE)
                 {
+                    // remember attributes e.g. [js some attributes]content[/js] etc.
 
-                    $searchString = '/\['.$searchLang.'(.*)\]/'; // https://regex101.com/
-                    $replaceString = "[$searchLang $1 ]<pre class=\"xprotect\">";
+                    $searchString   = '/\['.$searchLang.'(.*)\]/'; // https://regex101.com/
+                    $replaceString  = "[$searchLang $1 ]<pre class=\"xprotect\">";
 
                     // using preg_replace to cope with attributes (no wild card in str_pos)
                     // can't easily do the whole [shortcode atts]code-to-highlight[/shortcode]
-                    // in one go though as it get's complicated when the shortcode appears
+                    // in one go though as it gets complicated when the shortcode appears
                     // more than once, successively (have to look at occurances etc.)
                     // and computationally gets expensive.  This is a compromise.
-                    $content = preg_replace( $searchString, $replaceString , $content );
-                    $content = str_replace('[/'.$searchLang.']', '</pre><!-- end xprotect -->[/'.$searchLang.']', $content);
+                    $content = preg_replace(    $searchString,
+                                                $replaceString, 
+                                                $content );
+
+                    $content = str_replace(     '[/'.$searchLang.']',   
+                                                '</pre><!-- end xprotect -->[/'.$searchLang.']', 
+                                                $content);
                 }
                 //break;
             }
@@ -426,14 +446,14 @@ class TheContent
         if (strpos($code_content, "</p>\n<pre class=\"xprotect\">") !== FALSE)
         {
             // wpautop() on:
-            $code_content = str_replace("</p>\n<pre class=\"xprotect\">", '', $code_content);
+            $code_content = str_replace("</p>\n<pre class=\"xprotect\">", '',   $code_content);
             $code_content = str_replace("</pre>\n<p><!-- end xprotect -->", '', $code_content);
         }
         else
         {
             // wpautop() off:
-            $code_content = str_replace("<pre class=\"xprotect\">", '', $code_content);
-            $code_content = str_replace("</pre><!-- end xprotect -->", '', $code_content);
+            $code_content = str_replace("<pre class=\"xprotect\">", '',     $code_content);
+            $code_content = str_replace("</pre><!-- end xprotect -->", '',  $code_content);
         }
 
         return $code_content;
@@ -446,21 +466,21 @@ class TheContent
     *
     *   Shortcodes for inline syntax highlighting, github raw file highlighting,
     *   and github raw file retrieved by ajax calls (multiple within a post for example)
-    *   highlighting.  All the aliases use xsyntax_shortcode
+    *   highlighting.  All the aliases use xsyntax_shortcode.
     *
     */
 
 class Shortcodes
 {
-    private $xartaLangs;                // NULL TODO: ERROR CHECKING IN CONSTRUCTOR
+    private $xartaLangs;
     private $xartaSyntaxHLoutput;       // pass in object that generates response output
     private $xartaSyntaxHLsanitise;     // pass in object that sanitises $atts array in shortcodes
 
     public function __construct($xartaLangs, $xartaSyntaxHLsanitise)
     {
-        $this->xartaLangs = $xartaLangs;
-        $this->xartaSyntaxHLoutput = new Output($xartaSyntaxHLsanitise);
-        $this->xartaSyntaxHLsanitise = $xartaSyntaxHLsanitise;
+        $this->xartaLangs =             $xartaLangs;
+        $this->xartaSyntaxHLoutput =    new Output($xartaSyntaxHLsanitise);
+        $this->xartaSyntaxHLsanitise =  $xartaSyntaxHLsanitise;
 
         add_shortcode('github',                 array($this, 'github_shortcode'));
         add_shortcode('cgithub',                array($this, 'cgithub_shortcode'));
@@ -474,6 +494,7 @@ class Shortcodes
             add_shortcode($searchLang, function( $atts = [], $content = '') use ($searchLang)
             {
                 $atts['lang'] = "$searchLang";
+
                 return $this->xsyntax_shortcode( $atts, $content);
             });
         }
@@ -487,9 +508,10 @@ class Shortcodes
 
         // hard-code here as not sure of security risk of php file_get_contents 
         // ... available to shortcode
-        $github_base_url = 'https://raw.githubusercontent.com/';
-        $github_user = $this->xartaSyntaxHLsanitise->constrain_github_user($atts);
-        $repo_raw_file = $atts['raw'];
+        $github_base_url =  'https://raw.githubusercontent.com/';
+        $github_user =      $this->xartaSyntaxHLsanitise->constrain_github_user($atts);
+        $repo_raw_file =    $atts['raw'];
+
         return  "$github_base_url$github_user/$repo_raw_file";
     }
 
@@ -510,15 +532,13 @@ class Shortcodes
 
     public function xgithub_shortcode( $atts )
     {
-        //global $xartaSyntaxHLshortcodes;
-        $atts['outputcode'] = $this->github_shortcode($atts);
-        $atts['title'] = $this->github_get_url($atts);
+        $atts['outputcode'] =   $this->github_shortcode($atts);
+        $atts['title'] =        $this->github_get_url($atts);
 
+        // DEBUG:
         //echo "xgithub_shortcode<br /><br />";
         //HelperFuncs::printArray($atts);
-        
 
-        // TODO TODO TODO HERE HERE HERE WILL BECOME INTERNAL REFERENCE?
         return $this->xartaSyntaxHLoutput->xarta_highlight( $atts );     
     }
     
@@ -530,15 +550,15 @@ class Shortcodes
 
         do_action('x_enqueue_syntax_scripts');
 
-        $instance_id = 'xarta-id-'.trim(strval(uniqid()));
-        $xartaAjaxCssClass = 'xarta-target-ajax';
+        $instance_id =          'xarta-id-'.trim(strval(uniqid()));
+        $xartaAjaxCssClass =    'xarta-target-ajax';
 
-        $ajaxurl = "https://blog.xarta.co.uk/2017/03/test-ajax/";
+        $ajaxurl =              "https://blog.xarta.co.uk/2017/03/test-ajax/";
 
-        $step1 = json_encode($atts);               // input
-        $step2 = base64_encode($step1);
-        $step3 = strtr($step2, '+/=', '-_,');      // url friendly
-        $ajaxpost = "atts=$step3";                 // output
+        $step1 =    json_encode($atts);                 // input
+        $step2 =    base64_encode($step1);
+        $step3 =    strtr($step2, '+/=', '-_,');        // url friendly
+        $ajaxpost = "atts=$step3";                      // output
 
         return "<div class=\"$xartaAjaxCssClass $instance_id\" ".
             "data-url=\"$ajaxurl\" data-post=\"$ajaxpost\">".
@@ -548,18 +568,18 @@ class Shortcodes
 
     public function xgithub_ajax_response_shortcode()
     {
-        //global $xartaSyntaxHLshortcodes;
         // TODO - ERROR HANDLING!!!
 
         // reverse of xgithub_ajax_shortcode
-        $ajaxpost = $_POST['atts'];                     // input
-        $step3 = strtr($ajaxpost, '-_,', '+/=');        // was url friendly
-        $step2 = base64_decode($step3);
-        $step1 = json_decode($step2,true);              // output
-                                                        // nb: "true" for associative array
+        $ajaxpost =     $_POST['atts'];                     // input
+        $step3 =        strtr($ajaxpost, '-_,', '+/=');     // was url friendly
+        $step2 =        base64_decode($step3);
+        $step1 =        json_decode($step2,true);           // output
+                                                            // nb: "true" for associative array
         
         $atts = $step1;
 
+        // DEBUG:
         // echo "xgithub_ajax_reponse_shortcode";
         // HelperFuncs::printArray($atts);
 
@@ -571,18 +591,18 @@ class Shortcodes
         // $atts is likely small here, so lower cost doing this
         $atts = array_change_key_case( (array)$atts, CASE_LOWER);
 
-        // for this shortcode, likely less inline code ... probably
+        // for this shortcode, likely less code, inline, ... probably
         // don't want my buttons or lightbox, so check if they exist,
         // and if not, then set to them to default to false, rather
         // than be defaulted later to true
-        if(!array_key_exists('buttons', $atts)){ $atts['buttons'] = 'false'; }
-        if(!array_key_exists('lightbox', $atts)){ $atts['lightbox'] = 'false'; }
-        if(!array_key_exists('light', $atts)){ $atts['light'] = '1'; }
+        if(!array_key_exists('buttons',     $atts)){ $atts['buttons'] =     'false'; }
+        if(!array_key_exists('lightbox',    $atts)){ $atts['lightbox'] =    'false'; }
+        if(!array_key_exists('light',       $atts)){ $atts['light'] =       '1'; }
 
         // for this shortcode (and aliases), we get the code inbetween shortcode tags
         // e.g. $content.  But xarta_highlight looks for array member 'outputcode'
         $atts['outputcode'] = TheContent::xarta_remove_xprotect_pre_tags($content);
-        //$atts['outputcode'] = $content;
+        
         return $this->xartaSyntaxHLoutput->xarta_highlight( $atts );
     }
 }
@@ -617,6 +637,13 @@ class Output
 
     // square bracket functions to prevent other shortcodes in 
     // the source file from being evaluated!
+    // can't just use html code for square brackets as might appear
+    // in <pre><code> tags etc. to be displayed on a page ...
+    // ... I needed something unique that I'll never want to
+    // display on a page as content. BUT: what if I use my
+    // github raw file shortcodes to display this source !!!
+    // That's why I split the guid in two in the source so that
+    // they don't appear concatenated at all in the source.
     private function x_squarebrackets_to_guid( $input)
     {
         $guid1 = 'f4cd1bfaa3fa49b28'.'984c326ab9b36d9';
@@ -658,8 +685,8 @@ class Output
 
         do_action('x_enqueue_syntax_scripts');
 
-        $atts = $this->xartaSyntaxHLsanitise->css_classname_and_instance_id($atts);
-        $instanceID = $atts['instanceid'];
+        $atts =         $this->xartaSyntaxHLsanitise->css_classname_and_instance_id($atts);
+        $instanceID =   $atts['instanceid'];
 
         // $options below requires that $atts have been massaged
         extract( $this->xartaSyntaxHLsanitise->attribute_massage( $atts )); // e.g. $outputcode is extracted, $options etc.
@@ -669,9 +696,9 @@ class Output
         
         $testoutput = $outputcode; // capture before anything done to it
 
-        $outputcode = $this->x_squarebrackets_to_guid($outputcode);     // prevent shortcodes in code
-                                                                        // from being evaluated in do_shortcode()
-        $outputcode = $this->fix_reference_issue($outputcode);                 // TODO check if still necessary
+        $outputcode = $this->x_squarebrackets_to_guid($outputcode);         // prevent shortcodes in code
+                                                                            // from being evaluated in do_shortcode()
+        $outputcode = $this->fix_reference_issue($outputcode);              // TODO check if still necessary
 
         // my attribute $escapelt
         if($escapelt === 'true')
@@ -699,10 +726,11 @@ class Output
         // my attribute $lightbox
         if($lightbox === 'true')
         {
-            $colorboxID = trim(strval(uniqid()));
-            $wrap = '<div class="'.$wrap_classes.'"><div id="wp_colorbox_'.$colorboxID.'">'.$syntax.'</div></div>';
-            $start = '<p style="clear:both;">...</p><p><span style="float:right;"> ';
-            $codeoutput = do_shortcode($start . ' [wp_colorbox_media url="#wp_colorbox_'.$colorboxID.'" type="inline" hyperlink="" alt="CODE ZOOM"] ' . "</span></p>$wrap");
+            $colorboxID =   trim(strval(uniqid()));
+            $wrap =         '<div class="'.$wrap_classes.'"><div id="wp_colorbox_'.$colorboxID.'">'.$syntax.'</div></div>';
+            $start =        '<p style="clear:both;">...</p><p><span style="float:right;"> ';
+            $codeoutput =   do_shortcode($start . ' [wp_colorbox_media url="#wp_colorbox_'.$colorboxID.
+                                '" type="inline" hyperlink="" alt="CODE ZOOM"] ' . "</span></p>$wrap");
         }
         else if($testmode === 'true')
         {
@@ -730,15 +758,15 @@ class Output
 
 class Sanitise
 {
-    const THIS_IS_MY_ATT = true;
-    const NOT_MY_ATT = false;
+    const THIS_IS_MY_ATT = true;            // I've introduced this attribute to syntax highlighter
+    const NOT_MY_ATT = false;               // attribute already part of existing syntax highlighter
 
-    const SYNTAX_DEFAULT_TRUE = true;
-    const SYNTAX_DEFAULT_FALSE = false;
+    const SYNTAX_DEFAULT_TRUE = true;       // The default value for particular boolean attribute
+    const SYNTAX_DEFAULT_FALSE = false;     // The default value for particular boolean attribute
 
-    private $xartaLangs;
-    private $githubUsers;
-    private $githubUserDefault;
+    private $xartaLangs;                    // only permit these language attributes for syntax highlighting
+    private $githubUsers;                   // only permit these githubusers in raw github repo path
+    private $githubUserDefault;             // assume this github user if omitted
 
     public function __construct($xartaLangs, $githubUsers, $githubUserDefault)
     {
@@ -746,6 +774,18 @@ class Sanitise
         $this->githubUsers = $githubUsers;
         $this->githubUserDefault = $githubUserDefault;
     }
+
+
+
+    // true_false_sanitization ... EXAMPLE USE:
+    // $atts = $this->true_false_sanitization(
+    //              $atts, 'gutter', 'gutter', $gutter_default, self::SYNTAX_DEFAULT_TRUE, self::NOT_MY_ATT);
+
+    // The original syntax highlighter expects/and/or/accepts some attributes - so I want to know which ones I've added
+    //  e.g. "self::NOT_MY_ATT"
+
+    // The original syntax highlighter will have defaults assume for some omitted attributes, including TRUE & FALSE
+    //  e.g. "self::SYNTAX_DEFAULT_TRUE"
 
     private function true_false_sanitization($atts, $att_key, $att_dash_case, $my_default, $syntax_default, $my_att)
     {
@@ -780,7 +820,10 @@ class Sanitise
         return $atts;
     }
 
-
+    /** NB:
+    * In site header-code (JavaScript):
+    * <script>syntaxhighlighterConfig = { className: 'xarta-big-code' };</script>
+    */
 
     /**
     *  BEFORE looking at $atts array generally, the classname is scrutinised
@@ -791,9 +834,9 @@ class Sanitise
     */
     public function css_classname_and_instance_id ($atts)
     {
-        $instanceID = 'xarta-id-'.trim(strval(uniqid()));   // unique id for every "instance"
-        $customClassName = 'xarta-big-code';                // also set in JavaScript header - 
-                                                            // syntaxhighlighter config
+        $instanceID =       'xarta-id-'.trim(strval(uniqid()));     // unique id for every "instance"
+        $customClassName =  'xarta-big-code';                       // also set in JavaScript header - 
+                                                                    // syntaxhighlighter config
 
         $atts = array_change_key_case( (array)$atts, CASE_LOWER);
         if(!array_key_exists('classname', $atts)){ $atts['classname'] = ''; }
@@ -818,50 +861,54 @@ class Sanitise
 
     public function attribute_massage ($atts)
     {
-        $raw_default = 'my-wp-code-snippets/master/default.php';
-        $github_user_default = $this->githubUserDefault;
-        $outputcode_default = '';
-        $lang_default = 'code';
-        $light_default = '0';
-        $caption_default = '';
-        $title_default = '';
-        $autolinks_default = 'true';
-        $classname_default = '';
-        $firstline_default = '1';
-        $gutter_default = 'true';
-        $highlight_default = '';
-        $htmlscript_default = 'false';
-        $smarttabs_default = 'true';
-        $tabsize_default = '4';
-        $escapelt_default = 'true';
-        $buttons_default = 'true';
-        $lightbox_default = 'true';
-        $testmode_default = 'false';
+        // SET DEFAULTS HERE:
 
+        $raw_default =          'my-wp-code-snippets/master/default.php';
+        $github_user_default =  $this->githubUserDefault;
+        $outputcode_default =   '';
+        $lang_default =         'code';
+        $light_default =        '0';
+        $caption_default =      '';
+        $title_default =        '';
+        $autolinks_default =    'true';
+        $classname_default =    '';
+        $firstline_default =    '1';
+        $gutter_default =       'true';
+        $highlight_default =    '';
+        $htmlscript_default =   'false';
+        $smarttabs_default =    'true';
+        $tabsize_default =      '4';
+        $escapelt_default =     'true';
+        $buttons_default =      'true';
+        $lightbox_default =     'true';
+        $testmode_default =     'false';
+
+
+        // NOW LOAD THE ABOVE DEFAULTS INTO ARRAY:
 
         // for xarta_highlight function
         // WARNING WARNING:  will change semantics of some attributes
         // e.g. 'autolinks' => 'true' will become 'auto-links: 'true' ready for output insertion
         $atts_default = array(
-                'raw' => $raw_default,
-                'github_user' => $github_user_default,
-                'outputcode' => $outputcode_default, // empty if using xgithub shortcode (which will populate it)
-                'lang' => $lang_default,
-                'light' => $light_default,
-                'caption' => $caption_default,
-                'title' => $title_default,
-                'autolinks' => $autolinks_default,
-                'classname' => $classname_default,
-                'firstline' => $firstline_default,
-                'gutter' => $gutter_default,
-                'highlight' => $highlight_default,
-                'htmlscript' => $htmlscript_default,
-                'smarttabs' => $smarttabs_default,
-                'tabsize' => $tabsize_default,
-                'escapelt' => $escapelt_default,
-                'buttons' => $buttons_default,
-                'lightbox' => $lightbox_default,
-                'testmode' => $testmode_default
+                'raw' =>            $raw_default,
+                'github_user' =>    $github_user_default,
+                'outputcode' =>     $outputcode_default, // empty if using xgithub shortcode (which will populate it)
+                'lang' =>           $lang_default,
+                'light' =>          $light_default,
+                'caption' =>        $caption_default,
+                'title' =>          $title_default,
+                'autolinks' =>      $autolinks_default,
+                'classname' =>      $classname_default,
+                'firstline' =>      $firstline_default,
+                'gutter' =>         $gutter_default,
+                'highlight' =>      $highlight_default,
+                'htmlscript' =>     $htmlscript_default,
+                'smarttabs' =>      $smarttabs_default,
+                'tabsize' =>        $tabsize_default,
+                'escapelt' =>       $escapelt_default,
+                'buttons' =>        $buttons_default,
+                'lightbox' =>       $lightbox_default,
+                'testmode' =>       $testmode_default
         );
         
         // normalize attribute keys, lowercase
@@ -870,14 +917,37 @@ class Sanitise
         // supply missing attributes from $atts_default (and limit to atts_default)
         $atts = shortcode_atts( $atts_default, $atts );
 
-        $atts = $this->true_false_sanitization($atts, 'gutter',     'gutter',       $gutter_default,        self::SYNTAX_DEFAULT_TRUE,  self::NOT_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'autolinks',  'auto-links',   $autolinks_default,     self::SYNTAX_DEFAULT_TRUE,  self::NOT_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'htmlscript', 'html-script',  $htmlscript_default,    self::SYNTAX_DEFAULT_FALSE, self::NOT_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'smarttabs',  'smart-tabs',   $smarttabs_default,     self::SYNTAX_DEFAULT_TRUE,  self::NOT_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'escapelt',   'escape-lt',    $escapelt_default,      self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'buttons',    'buttons',      $buttons_default,       self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'lightbox',   'lightbox',     $lightbox_default,      self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
-        $atts = $this->true_false_sanitization($atts, 'testmode',   'testmode',     $testmode_default,      self::SYNTAX_DEFAULT_FALSE, self::THIS_IS_MY_ATT);
+        $atts = $this->true_false_sanitization($atts, 'gutter',     'gutter',       $gutter_default,        
+                                                                                                    self::SYNTAX_DEFAULT_TRUE,  
+                                                                                                    self::NOT_MY_ATT);
+
+        $atts = $this->true_false_sanitization($atts, 'autolinks',  'auto-links',   $autolinks_default,     
+                                                                                                    self::SYNTAX_DEFAULT_TRUE,  
+                                                                                                    self::NOT_MY_ATT);
+
+        $atts = $this->true_false_sanitization($atts, 'htmlscript', 'html-script',  $htmlscript_default,    
+                                                                                                    self::SYNTAX_DEFAULT_FALSE, 
+                                                                                                    self::NOT_MY_ATT);
+
+        $atts = $this->true_false_sanitization($atts, 'smarttabs',  'smart-tabs',   $smarttabs_default,     
+                                                                                                    self::SYNTAX_DEFAULT_TRUE,  
+                                                                                                    self::NOT_MY_ATT);
+
+        $atts = $this->true_false_sanitization($atts, 'escapelt',   'escape-lt',    $escapelt_default,      
+                                                                                                    self::SYNTAX_DEFAULT_FALSE, 
+                                                                                                    self::THIS_IS_MY_ATT);
+
+        $atts = $this->true_false_sanitization($atts, 'buttons',    'buttons',      $buttons_default,       
+                                                                                                    self::SYNTAX_DEFAULT_FALSE, 
+                                                                                                    self::THIS_IS_MY_ATT);
+
+        $atts = $this->true_false_sanitization($atts, 'lightbox',   'lightbox',     $lightbox_default,     
+                                                                                                    self::SYNTAX_DEFAULT_FALSE, 
+                                                                                                    self::THIS_IS_MY_ATT);
+
+        $atts = $this->true_false_sanitization($atts, 'testmode',   'testmode',     $testmode_default,      
+                                                                                                    self::SYNTAX_DEFAULT_FALSE, 
+                                                                                                    self::THIS_IS_MY_ATT);
 
 
         if (!$this->accept_lang($atts['lang']))
@@ -964,7 +1034,9 @@ class Sanitise
         {
             $atts['firstline'] = '';    // default is 1 anyway!
                                         // I mean, on the client side
-            // $atts['firstline'] = 'first-line: \''.$firstline_default.'\'; ';;
+                                        // SO no need for:
+                                        // $atts['firstline'] = 
+                                        //      'first-line: \''.$firstline_default.'\'; ';
         }
 
         if( is_numeric($atts['tabsize']) && is_int($atts['tabsize']))
@@ -976,7 +1048,9 @@ class Sanitise
         {
             $atts['tabsize'] = '';      // default is 4 anyway!
                                         // I mean, on the client side
-            // $atts['firstline'] = 'first-line: \''.$firstline_default.'\'; ';;
+                                        // SO no need for:
+                                        // $atts['tabsize'] = 
+                                        //      'tabsize: \''.$tabsize_default.'\'; ';
         }
 
         if(!empty($atts['highlight']))
