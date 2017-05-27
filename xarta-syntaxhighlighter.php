@@ -57,10 +57,10 @@ namespace xarta\syntaxhighlighter;
     *               * TODO'S  *         * OVER-TIME *
     *               ***********
     *
-    *   check limits of associative array member for holding raw GitHub data
-    *   look into ABSPATH
-    *   look into doing OOP properly, and autoloading
-    *   NOTE TO SELF: Use A: drive in Xarta8
+    *   => check limits of associative array member for holding raw GitHub data
+    *   => look into ABSPATH
+    *   => look into doing OOP properly, and autoloading
+    *   => NOTE TO SELF: Use (mapped) A: drive in Xarta8
     */
 
 
@@ -77,9 +77,9 @@ if ( ! defined( 'WPINC' ) ) {
     *               ***********
     *
     *   c++ causes a problem in the admin section with tiny mce & add media button
-    *   (so use cpp instead ... but c# seems ok so far)
+    *   (so use cpp instead ... but c# seems ok so far).
     *   Only include aliases that the JavaScript SyntaxHighlighter knows about!
-    *   Programmatically add shortcodes based on this array later
+    *   Programmatically add shortcodes based on this array later.
     *
     ****************************************************************************************/
     $xartaLangs = array('code', 'bash', 'cpp', 'c#', 'php', 'sql', 'js', 'css', 'xml');
@@ -103,7 +103,10 @@ if ( ! defined( 'WPINC' ) ) {
     *               ***********
     *
     *   Split the enqueing as not everything needed at 'wp_enqueue_scripts' time
-    *   Generate a page template for my own ajax function, if it doesn't exist or is old expired version'
+    *   Generate a page template for my own ajax function, if it doesn't exist or is old 
+    *   expired version.  NB Ajax ... bit confused about WordPress ajax - I gained the
+    *   impression it would be unsuitable for my needs, so I made my own technique for my
+    *   purposes, but now I'm not so sure.
     *
     */
 
@@ -111,12 +114,12 @@ class Enqueue
 {
     public function __construct()
     {
-        // enqueue for every page
+        // REGISTER all scripts,  & enqueue 'xarta_global_js' (only) for every page
         add_action('wp_enqueue_scripts', array($this, 'enqueueAssetsEveryTime'));
 
-        // e.g. only enqueue / do_action('x_enqueue_syntax_scripts'); in:
-        //      xgithub_ajax_shortcode
-        //      xarta_highlight
+        // nb:  only enqueue / do_action('x_enqueue_syntax_scripts'); in:
+        //      xgithub_ajax_shortcode    ... in shortcodes class
+        //      xarta_highlight           ... in output class
         add_action('x_enqueue_syntax_scripts', array($this, 'enqueueAssetsShortCode'));
         add_action('x_enqueue_syntax_scripts', array($this, 'xarta_setup_syntax_ajax_single_template'));
         // add_action('x_enqueue_syntax_scripts', array($this, 'xarta_setup_syntax_ajax_post'));  // TODO
@@ -124,12 +127,15 @@ class Enqueue
 
     public function enqueueAssetsEveryTime()
     {
+        // Every response: make sure scripts are REGISTERED, and ENQUEUE 'xarta_global_js'
+        // -----
+
         // create my own version codes
         $xarta_global_js_ver  = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-global-functions.js' ));
         $syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'theme.css' ));
         $x_syntax_theme_css_ver = date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-syntaxhighlighter-site-footer.css' ));
             
-        // 
+        // REGISTER:
         wp_register_script( 'xarta_global_js', plugins_url( 'xarta-global-functions.js', __FILE__ ), array(), $xarta_global_js_ver );
         wp_register_script('xarta_syntaxhighlighter_site_footer', plugins_url('xarta-syntaxhighlighter-site-footer.js', __FILE__ ), 
             array('syntaxhighlighter'), true );
@@ -146,6 +152,9 @@ class Enqueue
 
     public function enqueueAssetsShortCode()
     {
+        // When a syntaxhighlight-shortcode is found, when these scripts are actually needed,
+        // then make sure the scripts are enqueued in the response: do_action enqueueAssetsShortCode
+
         wp_enqueue_style ( 'syntaxhighlighter_css' );
         wp_enqueue_style ( 'x_syntaxhighlighter_css' );
         wp_enqueue_script( 'xarta_syntaxhighlighter_site_footer' );
@@ -235,7 +244,6 @@ class Enqueue
             // END FILE
             $success = file_put_contents ( $ajax_post_template_file_name, 
                 $ajax_post_template_for_my_xgithub_ajax_shortcode);
-            // echo $success;
         }
     }
 
@@ -302,7 +310,7 @@ class Enqueue
 class TheContent
 {
 
-    private $xartaCodesToCheck; // NULL TODO: ERROR CHECKING IN CONSTRUCTOR
+    private $xartaCodesToCheck;
 
     public function __construct($xartaLangs)
     {
@@ -329,12 +337,13 @@ class TheContent
             {
                 // leap-frog $end, looking for </code></pre> after
                 // $start i.e. after where <pre><code> was found
-                // nb this precludes nesting
+                // nb this precludes nesting - just finds first instance (no tracking)
                 $end = strpos($content, '</code></pre>', $start);
 
                 if ($end !== FALSE)
                 {
-                    $start = $start + 13;   // i.e. + characters for <pre><code>
+                    $start = $start + 11;   // i.e. + characters for <  p  r  e  >  <  c  o  d  e  > 
+                                            //                      01 02 03 04 05 06 07 08 09 10 11
                                             // $end is already at beginning of </code></pre>
                                             // so - like the filling of the sandwich ...
                     $pre_code_code_pre = substr($content, $start, $end-$start);
@@ -1062,3 +1071,6 @@ $xartaSyntaxHLenqueue =     new Enqueue();
 $xartaSyntaxHLthecontent =  new TheContent($xartaLangs);
 $xartaSyntaxHLsanitise =    new Sanitise($xartaLangs, $githubUsers, $githubUserDefault);
 $xartaSyntaxHLshortcodes =  new Shortcodes($xartaLangs, $xartaSyntaxHLsanitise);
+
+
+?>
