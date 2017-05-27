@@ -60,6 +60,7 @@ namespace xarta\syntaxhighlighter;
     *   => check limits of associative array member for holding raw GitHub data
     *   => look into ABSPATH
     *   => look into doing OOP properly, and autoloading
+    *   => make sure any shortcode attributes that make it to the response are escaped
     *   => NOTE TO SELF: Use (mapped) A: drive in Xarta8
     */
 
@@ -131,9 +132,14 @@ class Enqueue
         // -----
 
         // create my own version codes
-        $xarta_global_js_ver  =     date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-global-functions.js' ));
-        $syntax_theme_css_ver =     date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'theme.css' ));
-        $x_syntax_theme_css_ver =   date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 'xarta-syntaxhighlighter-site-footer.css' ));
+        $xarta_global_js_ver  =     date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 
+                                                    'xarta-global-functions.js' ));
+
+        $syntax_theme_css_ver =     date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 
+                                                    'theme.css' ));
+
+        $x_syntax_theme_css_ver =   date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 
+                                                    'xarta-syntaxhighlighter-site-footer.css' ));
             
         // REGISTER:
         wp_register_script( 'xarta_global_js', 
