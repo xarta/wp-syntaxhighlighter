@@ -1153,5 +1153,3 @@ $xartaSyntaxHLthecontent =  new TheContent($xartaLangs);
 $xartaSyntaxHLsanitise =    new Sanitise($xartaLangs, $githubUsers, $githubUserDefault);
 $xartaSyntaxHLshortcodes =  new Shortcodes($xartaLangs, $xartaSyntaxHLsanitise);
 
-
-?>
