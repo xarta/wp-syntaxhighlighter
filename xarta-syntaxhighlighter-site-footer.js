@@ -89,11 +89,12 @@ jQuery(document).ready(function($) {
         // using free version of menutab - which isn't responsive
         // this should fix the main issue on low res. screens for me
 
-        $("ul").addClass("xartaPlaceHolder01").hasClass("tabs");
-        $("ul").removeClass("tabs").hasClass("tabs");
+        $("ul.tabs").addClass("xartaPlaceHolder01");
+        $("ul.tabs").removeClass("tabs");
         if (getCSSmediaQsize >= 400)
         {
-            $("ul").addClass("tabs").hasClass("xartaPlaceHolder01");
+            $("ul.xartaPlaceHolder01").addClass("tabs");
+            $("ul.tabs").removeClass("xartaPlaceHolder01");
         }
     }
 
