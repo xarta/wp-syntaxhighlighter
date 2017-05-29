@@ -30,6 +30,11 @@ a.wp-colorbox-inline
 	color: #fff;
 }
 
+
+
+
+
+
 /*  xarta-syntaxhighlighter-site-footer.js creates div with this class */
 .syntaxhighlighter
 {
@@ -93,3 +98,55 @@ a.wp-colorbox-inline
     }
 }
 
+@media only screen and (max-width:768px)
+{
+    .xcaption {
+        margin-top: 5px;
+    }
+}
+
+@media only screen and (max-width:650px)
+{
+    .xarta-syntax-highlight
+    {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+
+@media only screen and (max-width:480px)
+{
+    .xcaption {
+        margin-left: -5%;
+        width: 110%;
+    }
+
+    .xarta-syntax-highlight
+    {
+        margin-left: -5%;
+        width: 110%;
+    }
+
+    a.wp-colorbox-inline 
+    {
+        position: relative;
+        right: -20%;
+        top: 5px;
+        font-size: 2em;
+    }
+
+    .fasc-button
+    {
+        font-size: 0.7em;
+    }
+}
+
+@media only screen and (max-width:320px)
+{
+     .fasc-button
+    {
+        max-width: 40px;
+        font-size: 1em;
+    }
+}

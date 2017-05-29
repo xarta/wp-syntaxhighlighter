@@ -43,8 +43,60 @@ console.log("**************************************************");
 //            are later set-up by the syntaxhighlighter.js script ... so can't pre-pend buttons
 //            for example to divs/classes that don't exist yet!
 
+
+var oldOrientation;
+
+
 jQuery(document).ready(function($) {
+
     
+    function getOrientation()
+    {
+        if(window.innerHeight > window.innerWidth)
+        {
+            return 'portrait';
+        }
+        else
+        {
+            return 'landscape';
+        }
+    }
+
+    
+    oldOrientation = getOrientation();
+
+    // this will overwrite and undo any manual width changes with width buttons
+    function resizeSyntaxHighlightInstance(xartaWidthControl, xartaInstanceID)
+    {
+
+        var getCSSmediaQsize;
+        var instanceWidth;
+        getCSSmediaQsize = $().mediaqNum();
+        if (getCSSmediaQsize <= 480)
+        {
+            instanceWidth = "110%";
+            $(xartaWidthControl+xartaInstanceID).css('margin-left','-5%');
+        }
+        else
+        {
+            instanceWidth = "100%";
+            $(xartaWidthControl+xartaInstanceID).css('margin-left','0');
+        }
+
+        $(xartaWidthControl+xartaInstanceID).width(instanceWidth);
+
+        // doing this here because of convenience for blog.xarta.co.uk
+        // using free version of menutab - which isn't responsive
+        // this should fix the main issue on low res. screens for me
+
+        $("ul").addClass("xartaPlaceHolder01").hasClass("tabs");
+        $("ul").removeClass("tabs").hasClass("tabs");
+        if (getCSSmediaQsize >= 400)
+        {
+            $("ul").addClass("tabs").hasClass("xartaPlaceHolder01");
+        }
+    }
+
     // call codeButtonLabelChange from jQuery window resize event, and pass as a callback
     // to the function that pre-pends the buttons and sets-up the on-click events
     // ** labels: if tight fit, use "f" for "font", "w" for "width" etc. **
@@ -53,6 +105,9 @@ jQuery(document).ready(function($) {
  
         clog("codeButtonLabelChange,"+  " xartaWidthControl = "+xartaWidthControl+
                                         " xartaInstanceID = "+xartaInstanceID, 1);
+
+
+
 
         var curxartaWidthControlPx = parseInt($(xartaWidthControl+xartaInstanceID).width());
         var small = curxartaWidthControlPx < 500;
@@ -81,8 +136,9 @@ jQuery(document).ready(function($) {
                                     " xartaWidthControl = "+xartaWidthControl+
                                     " xartaCodeButtons = "+xartaCodeButtons+
                                     " xartaInstanceID = "+xartaInstanceID, 1);
+        console.log("In renderCodeButtons() ... " + jQuery().mediaqNum());
 
-        $(xartaWidthControl+xartaInstanceID).width("100%");
+        resizeSyntaxHighlightInstance(xartaWidthControl, xartaInstanceID);
 
         var xartaInstanceIDnoDot = xartaInstanceID.substring(1);
         clog("xartaInstanceIDnoDot = "+xartaInstanceIDnoDot,1);
@@ -375,6 +431,20 @@ jQuery(document).ready(function($) {
     $(window).resize(function() 
     {
         clog("xarta-syntaxhighlighter-site-footer.js: resize event", 3);
+
+        var newOrientation = getOrientation();
+        if (newOrientation !== oldOrientation)
+        {
+            oldOrientation = newOrientation;
+            loopInstanceIDs(function(xartaInstanceID)
+            {
+                // (inner) callback passing xartaInstanceID
+                // that loopInstanceIDs finds, per loop
+                // (and xartaWidthControl as another param):
+                resizeSyntaxHighlightInstance(xartaWidthControl, xartaInstanceID);
+            }, xartaWidthControl);
+        }
+
         loopInstanceIDs(function(xartaInstanceID)
         {
             // (inner) callback passing xartaInstanceID
@@ -382,6 +452,10 @@ jQuery(document).ready(function($) {
             // (and xartaWidthControl as another param):
             codeButtonLabelChange(xartaWidthControl, xartaInstanceID);
         }, xartaWidthControl);
+
+
+
+        
     }).resize();
 
     
@@ -481,3 +555,212 @@ jQuery(document).ready(function($) {
 
 
 }); // end jQuery document ready
+
+
+
+jQuery(function() 
+{
+
+        /**
+         *  MEDIA QUERY CSS RESULTS AVAILABLE IN JAVASCRIPT
+         *  ... and available for image preloading
+         * 
+         * ---
+         * 
+         *  This is an idea I started in timeouttherapy.co.uk
+         *  I'm further developing it to be more general purpose.
+         * 
+         *  I wanted to use css (non-js-computed) @media widths, for
+         *  various reasons, but including preloading / loading
+         *  images according to responsive need.
+         * 
+         *  I decided to use a colour attribute in a hidden DIV.
+         *  And then an array of permitted nearest-values, so I can
+         *  limit available images for example without worrying about
+         *  maintaining the @media query thingies too much.
+         * 
+         *  Eventually I'll extend jQuery with preload functions e.g.
+         *  an original image, and responsively sized images etc. etc.
+         */
+
+        var mediaquery;
+        var aMediaqNum;
+        var aMediaqTxt;
+        var aMediaqTxtDefault;
+        var acceptableMediaq;
+
+        aMediaqTxtDefault = '1320';
+        mediaquery = '.jQueryMedia\r{ \r  color: #00' + aMediaqTxtDefault + '; \r} \r' ;
+        acceptableMediaq = [240, 320, 480, 650, 780, 980, 1320]; // important: ordered ascending
+
+        for (i = acceptableMediaq.length-1; i > 0; i--) 
+        {
+            aMediaqNum = acceptableMediaq[i];
+            aMediaqTxt = ('0000' + aMediaqNum).slice(-4);
+
+            mediaquery += '@media screen and (max-width: ' + aMediaqNum + 'px)\r{\r    .jQueryMedia\r    {\r        color: #00' + aMediaqTxt + '; \r    }\r}\r';
+        }
+        jQuery('head')
+                .append(
+            '<style type="text/css">' + mediaquery + '</style>' + "\r"
+                )
+        jQuery('body') 
+                .prepend(
+            '<div class="hidden jQueryMedia" style="opacity: 0">' +
+                '<span style="font-family: Arial, Helvetica, sans-serif;"></span>' +
+            '</div>');
+        
+        var hexDigits = new Array
+            ("0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"); 
+
+        //Function to convert rgb color to hex format
+        function rgb2hex(rgb) {
+            rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            return "#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
+        }
+    
+        // last 4 characters of colour in hex - using as denary for @media query screen size
+        function getMediaQuerySize (css) {
+            return rgb2hex(css).slice(-4);
+        }
+
+        function hex(x) {
+            return isNaN(x) ? "00" : hexDigits[(x - x % 16) / 16] + hexDigits[x % 16];
+        }
+
+        function getMediaq()
+        {
+            var mediaq;
+            // var acceptableMediaq; // declared outside of function
+
+            mediaq = getMediaQuerySize(jQuery('.jQueryMedia').css('color') );
+            // acceptableMediaq = [240, 320, 480, 650, 780, 980, 1320];    // pre-sorted !!!
+                                                                            // (using binary search)
+
+            // still using "closest" despite setting @media queries based on same array
+            // because want to reserve capability of manually adding more jQueryMedia stops
+            // in the style sheet, but constrain them here to the accepable array,
+            // (for premade / pre-existing images for example with the sizes in the file name)
+            // or use unrestrained with getMediaQuerySize etc.
+            //return mediaq;
+            return ('0000' + closest (mediaq, acceptableMediaq)).slice(-4);
+        }
+
+        jQuery.fn.extend({
+            mediaqTxt: function() {
+                return getMediaq();
+            },
+            mediaqNum: function() {
+                return parseInt(getMediaq(), 10);
+            }
+
+        });
+        
+        function closest (num, arr) {
+            var mid;
+            var lo = 0;
+            var hi = arr.length - 1;
+            while (hi - lo > 1) {
+                mid = Math.floor ((lo + hi) / 2);
+                if (arr[mid] < num) {
+                    lo = mid;
+                } else {
+                    hi = mid;
+                }
+            }
+            if (num - arr[lo] <= arr[hi] - num) {
+                return arr[lo];
+            }
+            return arr[hi];
+        }
+
+        // resize
+        jQuery(window).resize(function(){
+            //preload();
+            //alert("Temp test: mediaq = " +  getMediaq());
+            //console.log("Temp test: mediaq = " +  getMediaq());
+            console.log(jQuery().mediaqTxt());
+        });
+
+        // document ready - before images loaded etc.
+        jQuery(function() {
+            //preload(); // might add template-specific images to preload
+        });
+
+        // page load complete (including images)
+        jQuery( window ).on( "load", function() {
+            // preload(); // might add template-specific images to preload
+        });
+
+        function replaceimage()
+        {
+            jQuery(this.elm).find('img[src$="' + this.org + '"]').attr("srcset",this.src + " " + this.wdt);
+            jQuery(this.elm).find('img[src$="' + this.org + '"]').attr("src",this.src);
+        }
+
+        function setimage()
+        {
+            console.log ("Element: " + this.elm + ", CSS: " + this.css + ", Path: " + this.pth + mediaq + "." + this.typ)
+            jQuery(this.elm).css(this.css, 'url("' + this.pth + mediaq + '.' + this.typ + '")');
+        }
+
+        // use preload( array )  in footer (but consider only calling after low-res images loaded)
+        // EXAMPLE:
+
+        /*
+        <script>
+            preload(["https://timeouttherapy.co.uk/images-high/tree-high-", "#featured", "background-image", "png",
+                "https://timeouttherapy.co.uk/images-low/tree-low-0240.jpg", "100w"], [ETC 1], [ETC 2], [ETC n]);            
+        </script>
+        */
+        var images = new Array();
+        function preload() 
+        {
+            // DECISION BASED ON TIMING WHETHER TO LOAD BIGGER ASSETS
+            var loadTime = window.performance.timing.domContentLoadedEventEnd- window.performance.timing.navigationStart;
+            console.log("loadTime = " + loadTime);
+
+            if(loadTime > 2800)
+            {
+                console.log("Because of big Dom Content loadtime, aborting lazy loading of big assets");
+                return;
+            }
+
+            // using color attr to provide non-computed @media query I'm using
+            var mediaq = getMediaq();
+            console.log(mediaq);
+
+            // Access the parameter arrays
+            for (i = 0; i < preload.arguments.length; i++) 
+            {
+                images[i] = new Image();
+                images[i].pth = preload.arguments[i][0];    // used to create src
+                images[i].elm = preload.arguments[i][1];    // e.g. ".class" or "#id" etc. (jQuery)
+                images[i].css = preload.arguments[i][2];    // e.g. background-image
+                images[i].typ = preload.arguments[i][3];    // e.g. png, jpg etc.
+
+                images[i].org = preload.arguments[i][4];    // original image to find & replace e.g. maybe in a widget
+                images[i].wdt = preload.arguments[i][5];    // if there's a srcset, overwriting - specify width (string)
+                                                            // including units
+
+                // create src uri (image should pre-exist at this uri !!!)
+                images[i].src = preload.arguments[i][0] + mediaq + '.' + preload.arguments[i][3];
+                images[i].mdq = mediaq;
+
+                if (images[i].org === '')
+                {
+                    // just change image src for given element & css
+                    images[i].onload = setimage;
+                    console.log ("Preloading images for loop: path = " + images[i].pth + mediaq + "." + images[i].typ + ", element = " + images[i].elm);
+                }
+                else
+                {
+                    // find using element elm, and source src, then replace src, and overwrite srcset too if exists
+                    images[i].onload = replaceimage;
+                }
+
+            }
+        }
+});
+
+
