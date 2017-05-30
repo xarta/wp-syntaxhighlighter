@@ -74,7 +74,7 @@ a.wp-colorbox-inline
 
     /* Position the tooltip text - see examples below! */
     position: absolute;
-    z-index: 1;
+    z-index: 110;
 }
 
 /* Show the tooltip text when you mouse over the tooltip container */
@@ -198,6 +198,7 @@ li.repoLink {
         margin-left: -5%;
         width: 110%;
     }
+
 
     a.wp-colorbox-inline 
     {

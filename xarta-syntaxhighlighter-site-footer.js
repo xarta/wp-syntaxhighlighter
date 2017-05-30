@@ -69,11 +69,14 @@ jQuery(document).ready(function($) {
     function resizeSyntaxHighlightInstance(xartaWidthControl, xartaInstanceID)
     {
 
+        clog("resizeSyntaxHighlightInstance(xartaWidthControl, xartaInstanceID): ", 1);
+
         var getCSSmediaQsize;
         var instanceWidth;
         getCSSmediaQsize = $().mediaqNum();
         if (getCSSmediaQsize <= 480)
         {
+            clog("Trying to set syntaxhighlighter instance width wide", 1);
             instanceWidth = "110%";
             $(xartaWidthControl+xartaInstanceID).css('margin-left','-5%');
         }
@@ -89,12 +92,17 @@ jQuery(document).ready(function($) {
         // using free version of menutab - which isn't responsive
         // this should fix the main issue on low res. screens for me
 
-        $("ul.tabs").addClass("xartaPlaceHolder01");
-        $("ul.tabs").removeClass("tabs");
-        if (getCSSmediaQsize >= 400)
+        if (window.innerWidth >= 360)
         {
+            clog("Attempting to add tabs to menucool", 1);
             $("ul.xartaPlaceHolder01").addClass("tabs");
             $("ul.tabs").removeClass("xartaPlaceHolder01");
+        }
+        else
+        {
+            clog("Attempting to REMOVE tabs FROM menucool", 1);
+            $("ul.tabs").addClass("xartaPlaceHolder01");
+            $("ul.tabs").removeClass("tabs");
         }
     }
 
@@ -136,8 +144,9 @@ jQuery(document).ready(function($) {
         clog("renderCodeButtons,"+  " xartaBigCodeTarget = "+xartaBigCodeTarget+
                                     " xartaWidthControl = "+xartaWidthControl+
                                     " xartaCodeButtons = "+xartaCodeButtons+
-                                    " xartaInstanceID = "+xartaInstanceID, 1);
-        console.log("In renderCodeButtons() ... " + jQuery().mediaqNum());
+                                    " xartaInstanceID = "+xartaInstanceID+
+                                    " jQuery().mediaqNum() = "+jQuery().mediaqNum(), 1);
+        
 
         resizeSyntaxHighlightInstance(xartaWidthControl, xartaInstanceID);
 
@@ -592,7 +601,7 @@ jQuery(function()
 
         aMediaqTxtDefault = '1320';
         mediaquery = '.jQueryMedia\r{ \r  color: #00' + aMediaqTxtDefault + '; \r} \r' ;
-        acceptableMediaq = [240, 320, 480, 650, 780, 980, 1320]; // important: ordered ascending
+        acceptableMediaq = [240, 320, 400, 420, 480, 650, 780, 980, 1320]; // important: ordered ascending
 
         for (i = acceptableMediaq.length-1; i > 0; i--) 
         {

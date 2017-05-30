@@ -630,7 +630,8 @@ class Shortcodes
         $this->xartaSyntaxHLgithubApi->setUser($this->xartaSyntaxHLsanitise->constrain_github_user($atts) );
         $jsonArrRepos = $this->xartaSyntaxHLgithubApi->listRepos();
    
-
+        do_action('x_enqueue_syntax_scripts');
+        
         $repoList = '<ul class="repoList" >';
 
 
