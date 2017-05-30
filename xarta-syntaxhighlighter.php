@@ -81,6 +81,7 @@ if ( ! defined( 'WPINC' ) ) {
     *   (so use cpp instead ... but c# seems ok so far).
     *   Only include aliases that the JavaScript SyntaxHighlighter knows about!
     *   Programmatically add shortcodes based on this array later.
+    *   TODO: Make admin section and store these in database
     *
     ****************************************************************************************/
     $xartaLangs = array('code', 'bash', 'cpp', 'c#', 'php', 'sql', 'js', 'css', 'xml');
@@ -92,6 +93,7 @@ if ( ! defined( 'WPINC' ) ) {
     *               ***********
     *
     *   When retrieving raw GitHub files, only permit files from repos by these users:
+    *   TODO: Make admin section and store these in database
     *
     ****************************************************************************************/
     $githubUsers = array('davros1973', 'xarta');
@@ -482,12 +484,17 @@ class Shortcodes
     private $xartaLangs;
     private $xartaSyntaxHLoutput;       // pass in object that generates response output
     private $xartaSyntaxHLsanitise;     // pass in object that sanitises $atts array in shortcodes
+    private $xartaSyntaxHLgithubApi;    // pass in object to retrieve json from GitHub API e.g. repos
 
-    public function __construct($xartaLangs, $xartaSyntaxHLsanitise)
+    public function __construct($xartaLangs, $xartaSyntaxHLsanitise, $xartaSyntaxHLgithubApi)
     {
         $this->xartaLangs =             $xartaLangs;
         $this->xartaSyntaxHLoutput =    new Output($xartaSyntaxHLsanitise);
         $this->xartaSyntaxHLsanitise =  $xartaSyntaxHLsanitise;
+        $this->xartaSyntaxHLgithubApi = $xartaSyntaxHLgithubApi;
+
+        // Enable shortcodes in text widgets
+        add_filter('widget_text','do_shortcode');
 
         add_shortcode('github',                 array($this, 'github_shortcode'));
         add_shortcode('cgithub',                array($this, 'cgithub_shortcode'));
@@ -495,6 +502,7 @@ class Shortcodes
         add_shortcode('xgithub_ajax',           array($this, 'xgithub_ajax_shortcode'));
         add_shortcode('xgithub_ajax_response',  array($this, 'xgithub_ajax_response_shortcode'));
         add_shortcode('xsyntax',                array($this, 'xsyntax_shortcode'));
+        add_shortcode('repolist',               array($this, 'get_github_repos'));
 
         foreach ($this->xartaLangs as $searchLang)
         {
@@ -611,6 +619,39 @@ class Shortcodes
         $atts['outputcode'] = TheContent::xarta_remove_xprotect_pre_tags($content);
         
         return $this->xartaSyntaxHLoutput->xarta_highlight( $atts );
+    }
+
+    public function get_github_repos( $atts = [])
+    {
+        //echo $this->xartaSyntaxHLgithubApi->listRepos()[0]['name'];
+        //print_r( $this->xartaSyntaxHLgithubApi->listRepos() );
+        //print_r( $this->xartaSyntaxHLgithubApi->getRepoDetails($gr->listRepos()[0]['name']) );
+
+        $this->xartaSyntaxHLgithubApi->setUser($this->xartaSyntaxHLsanitise->constrain_github_user($atts) );
+        $jsonArrRepos = $this->xartaSyntaxHLgithubApi->listRepos();
+   
+
+        $repoList = '<ul class="repoList" >';
+
+
+        // TEMPORARY USE - just to see key / value pairings available
+        //                 normally leave commented-out
+        /*
+        foreach ($jsonArrRepos[0] as $key => $value)
+        {
+            $repoList .= '<li>' . $key . ': ' . $value . '</li>';
+        }
+        */
+
+        foreach ($jsonArrRepos as $jsonRepo)
+        {
+            $repoList .=    '<li class="repoLink tooltip" ><a href="' . $jsonRepo['html_url'] . '">' . 
+                            $jsonRepo['full_name'] . '<span class="tooltiptext">' . $jsonRepo['description'] . '</span></a></li>';
+        }
+        $repoList .= '</ul>';
+
+        return $repoList;
+
     }
 }
 
@@ -1147,9 +1188,109 @@ class HelperFuncs
 }
 
 
+// copied and pasted / modified - from:
+// https://stackoverflow.com/questions/14390090/github-api-list-all-repositories-and-repos-content
+class GRepo
+{
+    protected 
+        // needs "user"
+        $src_userRepos = "https://api.github.com/users/%s/repos",
+        // needs "user,repo"
+        $src_userRepoDetails = "https://api.github.com/repos/%s/%s",
+        $responseCode, $responseText,
+        $user, $githubApiUser, $githubApiTokn;
+
+    public function __construct($user, $githubApiUser, $githubApiTokn) {
+        $this->user = $user;
+        $this->githubApiUser = $githubApiUser;
+        $this->githubApiTokn = $githubApiTokn;
+    }
+
+    // xarta adding so can change user later in shortcode
+    // thought about creating new object just for shortcode - in the shortcode handler
+    // but decided I understand it more clearly for now if I keep it separate and pass in
+    public function setUser($user) {
+        $this->user = $user;
+    }
+
+    public function listRepos() {
+        $this->_request(
+            sprintf($this->src_userRepos, $this->user));
+        //$this->_request("https://api.github.com/users/xarta/repos");
+        if ($this->responseCode != 200) {
+            // TODO: better error indication - don't return here
+            //       have other public property or preferably some
+            //       kind of event binding and error framework or something?
+            return $this->responseCode;
+            throw new Exception('Server error!'); // e.g
+        }
+        // modified by xarta - prefer associative array for github repos
+        return json_decode($this->responseText, true);
+    }
+
+    public function getRepoDetails($repo) {
+        $this->_request(
+            sprintf($this->src_userRepoDetails, $this->user, $repo));
+        if ($this->responseCode != 200) {
+            throw new Exception('Server error!'); // e.g
+        }
+        return json_decode($this->responseText);
+    }
+
+    // Could be extended, e.g with CURL..
+    // modified by xarta - providing required header for github api
+
+    /**          TODO IMPORTANT -- CACHE GITHUB API RESPONSE - REDUCE LOAD */
+    // and deal with the 401 not found response properly
+
+    protected function _request($url) {
+        $opts = [
+        'http' =>   [
+                        'method' => 'GET',
+                        'header' => [
+                                'User-Agent: ' . $this->githubApiUser,
+                                'Authorization: Basic ' . base64_encode("$this->githubApiUser:$this->githubApiTokn")
+                        ]
+                    ]
+        ];
+
+        $context = stream_context_create($opts);
+        $content = file_get_contents($url, false, $context);
+
+        $this->responseCode = (false === $content) ? 400 : 200;
+        $this->responseText = $content;
+    }
+}
+
+// TODO: maybe store this in database and access from admin page
+// TODO: OOP this !
+// DONE: protect with .gitignore
+// DONE: protect with .htaccess
+// DONE: only use limited API token - limited harm if compromised
+//       nb: using just so I can have higher rate limits using the API
+//           though still need to look-at caching the API response
+// TODO: consider token encryption? Get key from somewhere else?
+//       look at frameworks ... Identity Server (.Net), OAUTH etc. etc.
+//       need to be consistent and disciplined!
+
+
+$gittoken = dirname(__FILE__) . '/git.token';
+
+if (file_exists($gittoken)) 
+{
+    $githubApiTokn = file_get_contents($gittoken); // Very limited role token
+    $githubApiUser = $githubUserDefault;
+} 
+else 
+{
+    // this should not happen (if it does - then serious problems!)
+    echo "The file $gittoken does not exist"; // top of response
+    $githubApiTokn = '';
+    $githubApiUser = '';
+}
 
 $xartaSyntaxHLenqueue =     new Enqueue();
 $xartaSyntaxHLthecontent =  new TheContent($xartaLangs);
 $xartaSyntaxHLsanitise =    new Sanitise($xartaLangs, $githubUsers, $githubUserDefault);
-$xartaSyntaxHLshortcodes =  new Shortcodes($xartaLangs, $xartaSyntaxHLsanitise);
-
+$xartaSyntaxHLgithubApi =   new GRepo($github_user_default, $githubApiUser, $githubApiTokn);
+$xartaSyntaxHLshortcodes =  new Shortcodes($xartaLangs, $xartaSyntaxHLsanitise, $xartaSyntaxHLgithubApi );
