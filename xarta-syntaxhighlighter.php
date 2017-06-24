@@ -338,7 +338,7 @@ class Enqueue
             'description'         => __( 'Post Type for content only', 'text_domain' ),
             'labels'              => $labels,
             'supports'            => array( 'title', 'editor', 'custom-fields', ),
-            'taxonomies'          => array( 'year', 'type' ),
+            'taxonomies'          => array( 'xyear', 'xtype' ),
             'hierarchical'        => false,
             'public'              => true,
             'show_ui'             => true,
@@ -361,24 +361,24 @@ class Enqueue
     // Register Custom Taxonomy
     public function xpost_year()  {
         $labels = array(
-            'name'                       => _x( 'Years', 'Taxonomy General Name', 'text_domain' ),
-            'singular_name'              => _x( 'Year', 'Taxonomy Singular Name', 'text_domain' ),
-            'menu_name'                  => __( 'Year', 'text_domain' ),
-            'all_items'                  => __( 'All Years', 'text_domain' ),
-            'parent_item'                => __( 'Parent Year', 'text_domain' ),
-            'parent_item_colon'          => __( 'Parent Year:', 'text_domain' ),
-            'new_item_name'              => __( 'New Year Name', 'text_domain' ),
-            'add_new_item'               => __( 'Add New Year', 'text_domain' ),
-            'edit_item'                  => __( 'Edit Year', 'text_domain' ),
-            'update_item'                => __( 'Update Year', 'text_domain' ),
-            'separate_items_with_commas' => __( 'Separate years with commas', 'text_domain' ),
-            'search_items'               => __( 'Search years', 'text_domain' ),
-            'add_or_remove_items'        => __( 'Add or remove years', 'text_domain' ),
-            'choose_from_most_used'      => __( 'Choose from the most used yearss', 'text_domain' ),
+            'name'                       => _x( 'xYears', 'Taxonomy General Name', 'text_domain' ),
+            'singular_name'              => _x( 'xYear', 'Taxonomy Singular Name', 'text_domain' ),
+            'menu_name'                  => __( 'xYear', 'text_domain' ),
+            'all_items'                  => __( 'All xYears', 'text_domain' ),
+            'parent_item'                => __( 'Parent xYear', 'text_domain' ),
+            'parent_item_colon'          => __( 'Parent xYear:', 'text_domain' ),
+            'new_item_name'              => __( 'New xYear Name', 'text_domain' ),
+            'add_new_item'               => __( 'Add New xYear', 'text_domain' ),
+            'edit_item'                  => __( 'Edit xYear', 'text_domain' ),
+            'update_item'                => __( 'Update xYear', 'text_domain' ),
+            'separate_items_with_commas' => __( 'Separate xyears with commas', 'text_domain' ),
+            'search_items'               => __( 'Search xyears', 'text_domain' ),
+            'add_or_remove_items'        => __( 'Add or remove xyears', 'text_domain' ),
+            'choose_from_most_used'      => __( 'Choose from the most used xyears', 'text_domain' ),
         );
 
         $rewrite = array(
-            'slug'                       => 'year',
+            'slug'                       => 'xyear',
             'with_front'                 => true,
             'hierarchical'               => true,
         );
@@ -398,35 +398,35 @@ class Enqueue
             'show_admin_column'          => true,
             'show_in_nav_menus'          => true,
             'show_tagcloud'              => true,
-            'query_var'                  => 'year',
+            'query_var'                  => 'xyear',
             'rewrite'                    => $rewrite,
             'capabilities'               => $capabilities,
         );
 
-        register_taxonomy( 'year', 'xpost', $args );
+        register_taxonomy( 'xyear', 'xpost', $args );
     }
 
     // Register Custom Taxonomy
     public function xpost_type()  {
         $labels = array(
-            'name'                       => _x( 'Types', 'Taxonomy General Name', 'text_domain' ),
-            'singular_name'              => _x( 'Type', 'Taxonomy Singular Name', 'text_domain' ),
-            'menu_name'                  => __( 'Type', 'text_domain' ),
-            'all_items'                  => __( 'All Types', 'text_domain' ),
-            'parent_item'                => __( 'Parent Type', 'text_domain' ),
-            'parent_item_colon'          => __( 'Parent Type:', 'text_domain' ),
-            'new_item_name'              => __( 'New Type Name', 'text_domain' ),
-            'add_new_item'               => __( 'Add New Type', 'text_domain' ),
-            'edit_item'                  => __( 'Edit Type', 'text_domain' ),
-            'update_item'                => __( 'Update Type', 'text_domain' ),
-            'separate_items_with_commas' => __( 'Separate types with commas', 'text_domain' ),
-            'search_items'               => __( 'Search types', 'text_domain' ),
-            'add_or_remove_items'        => __( 'Add or remove types', 'text_domain' ),
-            'choose_from_most_used'      => __( 'Choose from the most used types', 'text_domain' ),
+            'name'                       => _x( 'xTypes', 'Taxonomy General Name', 'text_domain' ),
+            'singular_name'              => _x( 'xType', 'Taxonomy Singular Name', 'text_domain' ),
+            'menu_name'                  => __( 'xType', 'text_domain' ),
+            'all_items'                  => __( 'All xTypes', 'text_domain' ),
+            'parent_item'                => __( 'Parent xType', 'text_domain' ),
+            'parent_item_colon'          => __( 'Parent xType:', 'text_domain' ),
+            'new_item_name'              => __( 'New xType Name', 'text_domain' ),
+            'add_new_item'               => __( 'Add New xType', 'text_domain' ),
+            'edit_item'                  => __( 'Edit xType', 'text_domain' ),
+            'update_item'                => __( 'Update xType', 'text_domain' ),
+            'separate_items_with_commas' => __( 'Separate xtypes with commas', 'text_domain' ),
+            'search_items'               => __( 'Search xtypes', 'text_domain' ),
+            'add_or_remove_items'        => __( 'Add or remove xtypes', 'text_domain' ),
+            'choose_from_most_used'      => __( 'Choose from the most used xtypes', 'text_domain' ),
         );
 
         $rewrite = array(
-            'slug'                       => 'type',
+            'slug'                       => 'xtype',
             'with_front'                 => true,
             'hierarchical'               => true,
         );
@@ -446,12 +446,12 @@ class Enqueue
             'show_admin_column'          => true,
             'show_in_nav_menus'          => true,
             'show_tagcloud'              => true,
-            'query_var'                  => 'xpost_type',
+            'query_var'                  => 'xtype',
             'rewrite'                    => $rewrite,
             'capabilities'               => $capabilities,
         );
 
-        register_taxonomy( 'type', 'xpost', $args );
+        register_taxonomy( 'xtype', 'xpost', $args );
     }
 
     function simone_rewrite_flush() {
@@ -760,7 +760,13 @@ class Shortcodes
         $instance_id =          'xarta-id-'.trim(strval(uniqid()));
         $xartaAjaxCssClass =    'xarta-target-ajax';
 
-        $ajaxurl =              "https://blog.xarta.co.uk/2017/03/test-ajax/";
+        //$ajaxurl =              "https://blog.xarta.co.uk/2017/03/test-ajax/";
+        //$ajaxurl =              "https://blog.xarta.co.uk/2017/06/test-ajax2/";
+
+        // using custom post type (make sure rules flushed first, and no conflict in taxonomy name)
+        // (even if types appear in admin, check not getting 404 on this url)
+        // so this post just has the shortcode for xgithub_ajax_response in it and that's it!
+        $ajaxurl =                "https://blog.xarta.co.uk/xpost/xgithub-ajax-response/";
 
         $step1 =    json_encode($atts);                 // input
         $step2 =    base64_encode($step1);
