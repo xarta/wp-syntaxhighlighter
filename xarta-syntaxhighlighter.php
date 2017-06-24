@@ -111,6 +111,12 @@ if ( ! defined( 'WPINC' ) ) {
     *   impression it would be unsuitable for my needs, so I made my own technique for my
     *   purposes, but now I'm not so sure.
     *
+    *   ********* !!!!!!!!!!!!!!! ************
+    *   UPDATE JUNE 2017: expanding this "plug-in" and purpose of "ajax" template for
+    *   generalised "plain" posts with own taxonomy so I can use them for other purposes
+    *   ... including more ajax implementations - not just for my syntaxhighlighter 
+    *   ... implementation but also for other uses in my site.
+    *
     */
 
 class Enqueue
@@ -126,6 +132,27 @@ class Enqueue
         add_action('x_enqueue_syntax_scripts',  array($this, 'enqueueAssetsShortCode'));
         add_action('x_enqueue_syntax_scripts',  array($this, 'xarta_setup_syntax_ajax_single_template'));
         // add_action('x_enqueue_syntax_scripts', array($this, 'xarta_setup_syntax_ajax_post'));  // TODO
+
+
+        // ADDED JUNE 2017:  *************************************************************
+        // *** EXTRA-BIT ... GENERAL PURPOSE "plain" POST-TYPE I'M CALLING "xpost"
+        //               ... IT SHOULD APPEAR IN THE ADMIN SECTION AS A NEW TYPE OF
+        //               ... POST WITH ITS OWN TAXONOMY
+
+        // Hook into the 'init' action
+        add_action( 'init', array($this, 'xpost' ));
+        add_action( 'init', array($this, 'xpost_year' ));
+        add_action( 'init', array($this, 'xpost_type' ));
+        add_action( 'after_switch_theme', array($this, 'simone_rewrite_flush' ));
+
+
+        // SHORTCODE TO USE "xpost" POSTS IN "NORMAL" POSTS
+        add_shortcode('xpostplain', array($this, 'xpostplain_shortcode'));
+        // ... previously I used a shortcode still in my "snippets" section 
+        // ... which I'll gradually retire
+        // *******************************************************************************
+
+
     }
 
     public function enqueueAssetsEveryTime()
@@ -185,6 +212,18 @@ class Enqueue
         // where I can put my ajax shortcode to process/respond to $_POST
         // data thrown at it
 
+        // UPDATE JUNE 2017: I did call this single-xgithub.php but I'm 
+        // renaming it to make it more general: single-xpost.php and am now 
+        // adding a custom post type properly to WordPress along with expandable
+        // taxonomy.  The posttype itself isn't "ajax" ... it's just useful 
+        // for my xGitHub syntax highlighter ajax version ... which needs
+        // a response uncluttered with any extraneous data. xpost is a means
+        // of returning an uncluttered post for my xGitHub function, or anything
+        // else - i.e. insert sections into other posts for structure ... and,
+        // eventually, using ajax as well ... so eventually I'll have proper
+        // viewport detection so assets are only loaded when within the viewport
+        // etc.  That's the long-term idea.
+
         // if not already there, copy to the theme template directory
 
 
@@ -193,7 +232,7 @@ class Enqueue
         $ajax_post_template_file_current_version = 5;      // **
         // ************************************************** **
         $feedback = '';
-        $ajax_post_template_file_name = get_stylesheet_directory().'/single-xgithub.php';
+        $ajax_post_template_file_name = get_stylesheet_directory().'/single-xpost.php';
         $ajax_post_template_file_create = TRUE;
 
 
@@ -229,7 +268,7 @@ class Enqueue
             $ajax_post_template_for_my_xgithub_ajax_shortcode = 
             '<?php
             /**
-            WP Post Template: xgithub
+            WP Post Template: xpost
             */
             // '.$feedback.'
             // To help debugging filters:
@@ -265,25 +304,178 @@ class Enqueue
         }
     }
 
-    public function xarta_setup_syntax_ajax_post()
-    {
-        // UNDER DEVELOPMENT / TODO / don't use yet!!!
-        // DEVELOPING THIS - PROBLEM ON MY SITE AND "post_type"
-        // (have to use meta tables instead)
 
-        $post_arr = array(
-            'post_title'    =>  'random', 
-            'post_content'  =>  'demo text',
-            'post_type'     =>  'xgithub',
-            'post_status'   =>  'publish',
-            'post_author'   =>   1,
-            'post_category' =>  'uncategorised'
+    // ADDED JUNE 2017: register the xpost template above in WordPress with own taxonomies
+    // https://wordpress.stackexchange.com/questions/96785/custom-post-type-single-custom-php-not-working  
+    //Post and Taxonomy stuff
+    //Register Custom Post Type
+    public function xpost() {
+        $labels = array(
+            'name'                => _x( 'X posts', 'Post Type General Name', 'text_domain' ),
+            'singular_name'       => _x( 'X post', 'Post Type Singular Name', 'text_domain' ),
+            'menu_name'           => __( 'X post', 'text_domain' ),
+            'parent_item_colon'   => __( 'X post:', 'text_domain' ),
+            'all_items'           => __( 'All X posts', 'text_domain' ),
+            'view_item'           => __( 'View X post', 'text_domain' ),
+            'add_new_item'        => __( 'Add New X post', 'text_domain' ),
+            'add_new'             => __( 'New X post', 'text_domain' ),
+            'edit_item'           => __( 'Edit X post', 'text_domain' ),
+            'update_item'         => __( 'Update X post', 'text_domain' ),
+            'search_items'        => __( 'Search X posts', 'text_domain' ),
+            'not_found'           => __( 'No X posts found', 'text_domain' ),
+            'not_found_in_trash'  => __( 'No X posts found in Trash', 'text_domain' ),
         );
 
-        $id = wp_insert_post($post_arr, true);
+        $rewrite = array(
+            'slug'                => 'xpost',
+            'with_front'          => true,
+            'pages'               => true,
+            'feeds'               => true,
+        );
 
-        echo $id;
+        $args = array(
+            'label'               => __( 'xpost', 'text_domain' ),
+            'description'         => __( 'Post Type for content only', 'text_domain' ),
+            'labels'              => $labels,
+            'supports'            => array( 'title', 'editor', 'custom-fields', ),
+            'taxonomies'          => array( 'year', 'type' ),
+            'hierarchical'        => false,
+            'public'              => true,
+            'show_ui'             => true,
+            'show_in_menu'        => true,
+            'show_in_nav_menus'   => true,
+            'show_in_admin_bar'   => true,
+            'menu_position'       => 5,
+            'can_export'          => true,
+            'has_archive'         => true,
+            'exclude_from_search' => false,
+            'publicly_queryable'  => true,
+            'query_var'           => 'xpost',
+            'rewrite'             => $rewrite,
+            'capability_type'     => 'page',
+        );
 
+        register_post_type( 'xpost', $args );
+    }
+
+    // Register Custom Taxonomy
+    public function xpost_year()  {
+        $labels = array(
+            'name'                       => _x( 'Years', 'Taxonomy General Name', 'text_domain' ),
+            'singular_name'              => _x( 'Year', 'Taxonomy Singular Name', 'text_domain' ),
+            'menu_name'                  => __( 'Year', 'text_domain' ),
+            'all_items'                  => __( 'All Years', 'text_domain' ),
+            'parent_item'                => __( 'Parent Year', 'text_domain' ),
+            'parent_item_colon'          => __( 'Parent Year:', 'text_domain' ),
+            'new_item_name'              => __( 'New Year Name', 'text_domain' ),
+            'add_new_item'               => __( 'Add New Year', 'text_domain' ),
+            'edit_item'                  => __( 'Edit Year', 'text_domain' ),
+            'update_item'                => __( 'Update Year', 'text_domain' ),
+            'separate_items_with_commas' => __( 'Separate years with commas', 'text_domain' ),
+            'search_items'               => __( 'Search years', 'text_domain' ),
+            'add_or_remove_items'        => __( 'Add or remove years', 'text_domain' ),
+            'choose_from_most_used'      => __( 'Choose from the most used yearss', 'text_domain' ),
+        );
+
+        $rewrite = array(
+            'slug'                       => 'year',
+            'with_front'                 => true,
+            'hierarchical'               => true,
+        );
+
+        $capabilities = array(
+            'manage_terms'               => 'manage_categories',
+            'edit_terms'                 => 'manage_categories',
+            'delete_terms'               => 'manage_categories',
+            'assign_terms'               => 'edit_posts',
+        );
+
+        $args = array(
+            'labels'                     => $labels,
+            'hierarchical'               => true,
+            'public'                     => true,
+            'show_ui'                    => true,
+            'show_admin_column'          => true,
+            'show_in_nav_menus'          => true,
+            'show_tagcloud'              => true,
+            'query_var'                  => 'year',
+            'rewrite'                    => $rewrite,
+            'capabilities'               => $capabilities,
+        );
+
+        register_taxonomy( 'year', 'xpost', $args );
+    }
+
+    // Register Custom Taxonomy
+    public function xpost_type()  {
+        $labels = array(
+            'name'                       => _x( 'Types', 'Taxonomy General Name', 'text_domain' ),
+            'singular_name'              => _x( 'Type', 'Taxonomy Singular Name', 'text_domain' ),
+            'menu_name'                  => __( 'Type', 'text_domain' ),
+            'all_items'                  => __( 'All Types', 'text_domain' ),
+            'parent_item'                => __( 'Parent Type', 'text_domain' ),
+            'parent_item_colon'          => __( 'Parent Type:', 'text_domain' ),
+            'new_item_name'              => __( 'New Type Name', 'text_domain' ),
+            'add_new_item'               => __( 'Add New Type', 'text_domain' ),
+            'edit_item'                  => __( 'Edit Type', 'text_domain' ),
+            'update_item'                => __( 'Update Type', 'text_domain' ),
+            'separate_items_with_commas' => __( 'Separate types with commas', 'text_domain' ),
+            'search_items'               => __( 'Search types', 'text_domain' ),
+            'add_or_remove_items'        => __( 'Add or remove types', 'text_domain' ),
+            'choose_from_most_used'      => __( 'Choose from the most used types', 'text_domain' ),
+        );
+
+        $rewrite = array(
+            'slug'                       => 'type',
+            'with_front'                 => true,
+            'hierarchical'               => true,
+        );
+
+        $capabilities = array(
+            'manage_terms'               => 'manage_categories',
+            'edit_terms'                 => 'manage_categories',
+            'delete_terms'               => 'manage_categories',
+            'assign_terms'               => 'edit_posts',
+        );
+
+        $args = array(
+            'labels'                     => $labels,
+            'hierarchical'               => true,
+            'public'                     => true,
+            'show_ui'                    => true,
+            'show_admin_column'          => true,
+            'show_in_nav_menus'          => true,
+            'show_tagcloud'              => true,
+            'query_var'                  => 'xpost_type',
+            'rewrite'                    => $rewrite,
+            'capabilities'               => $capabilities,
+        );
+
+        register_taxonomy( 'type', 'xpost', $args );
+    }
+
+    function simone_rewrite_flush() {
+        flush_rewrite_rules();
+    }
+
+    // ALREADY HAVE xpostcontent shortcode ... but that just worked with posttype "post"
+    // ... so making a new one so I can use a different template and tweak as required
+    public function xpostplain_shortcode( $atts ) 
+    {
+        extract( shortcode_atts( array(
+        'my_slug' => 'my_slug'
+        ), $atts ) );
+
+        $args = array(
+        'name'           => $my_slug,
+        'post_type'      => 'xpost',
+        'post_status'    => 'publish',
+        'posts_per_page' => 1
+        );
+        $searchposts = get_posts( $args );
+        $foundpost = get_post($searchposts[0]->ID);
+
+        return apply_filters('the_content', $foundpost->post_content );
     }
 } 
 
