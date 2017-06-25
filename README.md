@@ -12,12 +12,14 @@ My first **WordPress plug-in** attempt; a mash-up and extension for ajax-github-
 * Make a custom template for a single post (just to return *the_content*)
 * Add one of my shortcodes to a post based on that template (that responds to Ajax requests)
 
+VERSION 0.2 UPDATE ... NOW CUSTOM TEMPLATE AND AJAX RESPONSE SHORTCODE IN A CUSTOM POST IS ALL ADDED PROGRAMMATICALLY BUT STILL NO ERROR HANDLING / TESTING
+
 And, Bob's your Uncle ... syntax highlighting of GitHub raw files retrieved optionally via Ajax request, or Syntax highlighting of code pasted into open shortcodes in the WordPress post, and with optional Width size, Fontsize, or fullscreen potentially Lightbox effect for the highlighted code.  TODO: button to toggle line-numbering on/off.
 
 ## MAJOR ISSUES: 
 
 * ~~still in global scope (in WordPress)~~ ... ~~at least affects (*as in disables*) the "add media" button in the post-editor~~ *fixed*
-* still have to manually add a post with a custom template for the ajax response shortcode, and a path to it *although the template's automated now*
+* ~~still have to manually add a post with a custom template for the ajax response shortcode, and a path to it *although the template's automated now*~~ *automated*
 * still have to manually set other variables (and still uses some global variables) etc.  
 * no admin part yet    
 
