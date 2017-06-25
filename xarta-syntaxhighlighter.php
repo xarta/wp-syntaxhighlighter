@@ -4,7 +4,7 @@ namespace xarta\syntaxhighlighter;
  * Plugin Name: Xarta Syntaxhighlighter
  * Plugin URI: https://blog.xarta.co.uk
  * Description: Simple WordPress ajax implementation of https://github.com/syntaxhighlighter/syntaxhighlighter/wiki
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: David Bayliss
  * Author URI: https://blog.xarta.co.uk
  * License: MIT
@@ -144,6 +144,8 @@ class Enqueue
         add_action( 'init', array($this, 'xpost_year' ));
         add_action( 'init', array($this, 'xpost_type' ));
         add_action( 'after_switch_theme', array($this, 'simone_rewrite_flush' ));
+        add_action( 'wp_loaded', array($this, 'xarta_create_post' )); // to respond to ajax request with xGitHub
+                                                                      // shortcode - using the post data
 
 
         // SHORTCODE TO USE "xpost" POSTS IN "NORMAL" POSTS
@@ -151,8 +153,6 @@ class Enqueue
         // ... previously I used a shortcode still in my "snippets" section 
         // ... which I'll gradually retire
         // *******************************************************************************
-
-
     }
 
     public function enqueueAssetsEveryTime()
@@ -304,16 +304,27 @@ class Enqueue
         }
     }
 
+    /**       TODO:
+     *        
+     *        https://codex.wordpress.org/Post_Formats
+     *        
+     *        e.g. 'aside' for the current empty / plain post
+     *        e.g. but maybe have meta info or additional scripts for video, gallery, image etc. ?
+     */  
 
     // ADDED JUNE 2017: register the xpost template above in WordPress with own taxonomies
     // https://wordpress.stackexchange.com/questions/96785/custom-post-type-single-custom-php-not-working  
-    //Post and Taxonomy stuff
-    //Register Custom Post Type
+    // ... I've adapted an existing example to my needs
+    // Post and Taxonomy stuff
+    // Register Custom Post Type
+    // To make sure this works, I've visited permalinks in settings to force rules-rewrite
+    // Also used the (old) "Rewrite Rules Inspector" plug-in to troubleshoot (i.e. had naming conflicts)
+    // ... https://wordpress.org/plugins/rewrite-rules-inspector/
     public function xpost() {
         $labels = array(
             'name'                => _x( 'X posts', 'Post Type General Name', 'text_domain' ),
             'singular_name'       => _x( 'X post', 'Post Type Singular Name', 'text_domain' ),
-            'menu_name'           => __( 'X post', 'text_domain' ),
+            'menu_name'           => __( 'Xarta post', 'text_domain' ),
             'parent_item_colon'   => __( 'X post:', 'text_domain' ),
             'all_items'           => __( 'All X posts', 'text_domain' ),
             'view_item'           => __( 'View X post', 'text_domain' ),
@@ -335,7 +346,7 @@ class Enqueue
 
         $args = array(
             'label'               => __( 'xpost', 'text_domain' ),
-            'description'         => __( 'Post Type for content only', 'text_domain' ),
+            'description'         => __( 'Xarta Post Type for content only', 'text_domain' ),
             'labels'              => $labels,
             'supports'            => array( 'title', 'editor', 'custom-fields', ),
             'taxonomies'          => array( 'xyear', 'xtype' ),
@@ -460,6 +471,7 @@ class Enqueue
 
     // ALREADY HAVE xpostcontent shortcode ... but that just worked with posttype "post"
     // ... so making a new one so I can use a different template and tweak as required
+    // ... USES POST-TYPE "xpost" - and doing it here rather than using code-snippets plug-in
     public function xpostplain_shortcode( $atts ) 
     {
         extract( shortcode_atts( array(
@@ -477,6 +489,77 @@ class Enqueue
 
         return apply_filters('the_content', $foundpost->post_content );
     }
+
+    /**                         https://tommcfarlin.com/programmatically-create-a-post-in-wordpress/
+    *
+    * A function used to programmatically create a post in WordPress. The slug, author ID, and title
+    * are defined within the context of the function.
+    *
+    * @returns -1 if the post was never created, -2 if a post with the same title exists, or the ID
+    *          of the post if successful.
+    */
+
+    public function xarta_create_post() {
+
+        // Initialize the page ID to -1. This indicates no action has been taken.
+        $post_id = -1;
+
+        // Setup the author, slug, and title for the post
+        $author_id = 0; // NOT SURE IF THIS RELEVANT ON CUSTOM POST TYPE IS AUTHOR A TAXONOMY???
+        $slug = 'xgithub-ajax-response';
+        $title = 'xGitHub-Ajax-Response';
+
+                /* // just a test - checking something
+                echo 'testing';
+                $xType = get_term_by('name', 'SYSTEM', 'xtype');
+                print_r($xType);
+                */
+
+        // (The example just used default 'page' type? I'm looking for (my) 'xpost')
+        // If the xpost doesn't already exist, then create it
+        if( NULL == get_page_by_title( $title, OBJECT, 'xpost' ) ) {
+
+            // Set the post ID so that we know the post was created successfully
+
+            $post_id = wp_insert_post(
+                array(
+                    'comment_status'    =>  'closed',
+                    'ping_status'       =>  'closed',
+                    'post_author'       =>  $author_id,
+                    'post_name'	        =>  $slug,
+                    'post_title'        =>  $title,
+                    'post_status'       =>  'publish',
+                    'post_type'	        =>  'xpost',
+                    'post_content'      =>  '[xgithub_ajax_response]',
+                    'meta_input'        =>  array('Xarta xPost Description' => 'If using Cors make sure this is permitted as needed for ajax from clients'.
+                                            'for syntaxhighlighting xGitHub ajax shortcode - this post takes the post-data and supplies the response') 
+                )
+            );
+
+            if ($post_id > 0)
+            {
+                wp_set_object_terms( $post_id, array('system', 'do-not-delete'), 'xtype' );
+                wp_set_object_terms( $post_id, '2017', 'xyear' );
+            }
+
+
+        // Otherwise, we'll stop
+        } else {
+
+                // Arbitrarily use -2 to indicate that the page with the title already exists
+                $post_id = -2;
+
+        } // end if
+
+
+    } // end programmatically_create_post
+ 
+    /*
+    $xarta_post_id = programmatically_create_post();
+    if( -1 == $xarta_post_id || -2 == $xarta_post_id ) {
+    // The post wasn't created or the page already exists
+    } // end if
+    */
 } 
 
     /**             *************\
@@ -1491,5 +1574,5 @@ else
 $xartaSyntaxHLenqueue =     new Enqueue();
 $xartaSyntaxHLthecontent =  new TheContent($xartaLangs);
 $xartaSyntaxHLsanitise =    new Sanitise($xartaLangs, $githubUsers, $githubUserDefault);
-$xartaSyntaxHLgithubApi =   new GRepo($github_user_default, $githubApiUser, $githubApiTokn);
+$xartaSyntaxHLgithubApi =   new GRepo($githubUserDefault, $githubApiUser, $githubApiTokn);
 $xartaSyntaxHLshortcodes =  new Shortcodes($xartaLangs, $xartaSyntaxHLsanitise, $xartaSyntaxHLgithubApi );
