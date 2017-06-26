@@ -778,6 +778,7 @@ class Shortcodes
         add_shortcode('xgithub_ajax_response',  array($this, 'xgithub_ajax_response_shortcode'));
         add_shortcode('xsyntax',                array($this, 'xsyntax_shortcode'));
         add_shortcode('repolist',               array($this, 'get_github_repos'));
+        add_shortcode('gedit',                  array($this, 'gedit_style'));
 
         foreach ($this->xartaLangs as $searchLang)
         {
@@ -934,6 +935,70 @@ class Shortcodes
 
         return $repoList;
 
+    }
+
+    // EXTRA SHORTCODES - additional to syntax highlighting but convenient for me here
+
+    // style like gedit in Ubuntu
+    // TODO: error handling etc.
+    // Obviously needs styling - subject to change, but right now:
+    // (in header): <link href="https://fonts.googleapis.com/css?family=Ubuntu+Mono" rel="stylesheet">
+    // and uses some pngs I made using screenshots from Ubuntu
+    // TODO: more efficient e.g. should be able to use more CSS, and less png
+    /*
+        .gedit
+        {
+            margin-bottom: 1rem;
+            position: relative;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        }
+        .gedit-top
+        {
+            background-image: url("/wp-content/themes/simone-child/gedit-css/top.png");
+            background-repeat: no-repeat;
+            height: 73px;
+            width: auto;
+            color: #fff;
+            padding-left: 70px;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            font: normal bold 14px/30px "Ubuntu Mono", monospace;
+        }
+        .gedit-top-right
+        {
+            background-image: url("/wp-content/themes/simone-child/gedit-css/top-right.png");
+            background-repeat: no-repeat;
+            position: absolute;
+            top: 0;
+            height: 73px;
+            width: 52px;
+            color: #fff;
+            margin-right: 0px;
+            right: 0px;
+            overflow: hidden;
+            white-space: nowrap;
+            z-index: 5;
+        }
+        .gedit-content
+        {
+            padding-bottom: 1rem;
+            background-repeat: no-repeat;
+            background-color: #F8F8FF;
+            background-position: right bottom;
+            background-image: url("/wp-content/themes/simone-child/gedit-css/bottom.png");
+        }
+        .gedit-content > pre
+        {
+            font: normal normal 14px/30px "Ubuntu Mono", monospace;
+            background-color: transparent;
+        }
+    */
+    public function gedit_style($atts = [], $content = '')
+    {
+        $output = '<div class="gedit"><div class="gedit-top">'.$atts['title'].'<div class="gedit-top-right"></div></div>'.
+            '<div class="gedit-content"><pre><code>'.$content.'</code></pre></div></div>';
+        return $output;
     }
 }
 
