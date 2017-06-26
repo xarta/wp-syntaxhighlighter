@@ -785,7 +785,7 @@ class Shortcodes
         $this->xartaSyntaxHLgithubApi = $xartaSyntaxHLgithubApi;
 
         // Enable shortcodes in text widgets
-        add_filter('widget_text',               array($this, 'do_shortcode'));
+        add_filter('widget_text', 'do_shortcode'); // no 'this' ... just 'enable' shortcodes
 
         add_shortcode('github',                 array($this, 'github_shortcode'));
         add_shortcode('cgithub',                array($this, 'cgithub_shortcode'));
@@ -795,7 +795,7 @@ class Shortcodes
         add_shortcode('xsyntax',                array($this, 'xsyntax_shortcode'));
         add_shortcode('repolist',               array($this, 'get_github_repos'));
         add_shortcode('gedit',                  array($this, 'gedit_style'));
-        add_shortcode('crt',                  array($this, 'crt_style'));
+        add_shortcode('crt',                    array($this, 'crt_style'));
 
         foreach ($this->xartaLangs as $searchLang)
         {
