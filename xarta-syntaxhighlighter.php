@@ -616,6 +616,16 @@ class TheContent
     public function xarta_before_the_content_normal_filters($content)
     {
 
+        // Check if we're inside the main loop in a single post page.
+        // leaving this in - in case useful one day - does nothing but waste cycles right now
+        if ( is_single() && in_the_loop() && is_main_query() ) {
+            $mainloop =  "I'm filtering the content inside the main loop";
+        }
+        else
+        {
+            $mainloop = "NOT filtering the content inside the main loop";
+        }
+
         // TASK ONE (see notes above class)
 
         $start = 0; // 0 from start of $content ... use as index (head)
@@ -670,6 +680,8 @@ class TheContent
 
             array_push($this->xartaCodesToCheck, "xsyntax");    // additional shortcode to check
                                                                 // (doesn't count as language alias)
+            
+            array_push($this->xartaCodesToCheck, "gedit");      // also protect this styling shortcode
 
             foreach ($this->xartaCodesToCheck as $searchLang)
             {
@@ -740,6 +752,8 @@ class TheContent
             $code_content = str_replace("</pre><!-- end xprotect -->", '',  $code_content);
         }
 
+        //$code_content = str_replace('<p></p>', '',  $code_content);
+
         return $code_content;
     }
 }
@@ -769,7 +783,7 @@ class Shortcodes
         $this->xartaSyntaxHLgithubApi = $xartaSyntaxHLgithubApi;
 
         // Enable shortcodes in text widgets
-        add_filter('widget_text','do_shortcode');
+        add_filter('widget_text',               array($this, 'do_shortcode'));
 
         add_shortcode('github',                 array($this, 'github_shortcode'));
         add_shortcode('cgithub',                array($this, 'cgithub_shortcode'));
@@ -790,6 +804,7 @@ class Shortcodes
             });
         }
     }
+
 
     private function github_get_url($atts)
     {
@@ -982,7 +997,7 @@ class Shortcodes
         }
         .gedit-content
         {
-            padding-bottom: 1rem;
+            padding-bottom: 4rem;
             background-repeat: no-repeat;
             background-color: #F8F8FF;
             background-position: right bottom;
@@ -992,12 +1007,18 @@ class Shortcodes
         {
             font: normal normal 14px/30px "Ubuntu Mono", monospace;
             background-color: transparent;
+            margin-bottom: 0!important;
+            overflow: hidden;
         }
     */
+
+    // ALSO: xarta_before_the_content_normal_filters($content) ... added gedit to list of shortcodes
+    //       to protect from wpauto et al.
     public function gedit_style($atts = [], $content = '')
     {
         $output = '<div class="gedit"><div class="gedit-top">'.$atts['title'].'<div class="gedit-top-right"></div></div>'.
-            '<div class="gedit-content"><pre><code>'.$content.'</code></pre></div></div>';
+            '<div class="gedit-content"><pre>'.TheContent::xarta_remove_xprotect_pre_tags($content).'</pre></div></div>';
+
         return $output;
     }
 }
