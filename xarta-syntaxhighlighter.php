@@ -683,6 +683,8 @@ class TheContent
             
             array_push($this->xartaCodesToCheck, "gedit");      // also protect this styling shortcode
 
+            array_push($this->xartaCodesToCheck, "crt");      // also protect this styling shortcode
+
             foreach ($this->xartaCodesToCheck as $searchLang)
             {
                 // e.g. $searchLang = 'code' or $searchLang = 'js' or $sesarchLane= 'c#' etc.
@@ -793,6 +795,7 @@ class Shortcodes
         add_shortcode('xsyntax',                array($this, 'xsyntax_shortcode'));
         add_shortcode('repolist',               array($this, 'get_github_repos'));
         add_shortcode('gedit',                  array($this, 'gedit_style'));
+        add_shortcode('crt',                  array($this, 'crt_style'));
 
         foreach ($this->xartaLangs as $searchLang)
         {
@@ -1019,6 +1022,31 @@ class Shortcodes
         $output = '<div class="gedit"><div class="gedit-top">'.$atts['title'].'<div class="gedit-top-right"></div></div>'.
             '<div class="gedit-content"><pre>'.TheContent::xarta_remove_xprotect_pre_tags($content).'</pre></div></div>';
 
+        return $output;
+    }
+
+
+    // NOTICED POSSIBLE BUG / LIMITATION WITH MY xprotect ETC. ... CAN'T DO [crt]something[/crt] all inline 
+    // MUST CLOSE ON DIFFERENT LINE!!!
+    // USES STYLING IN style.css !!!
+    // ALSO: xarta_before_the_content_normal_filters($content) ... added crt to list of shortcodes
+    //       to protect from wpauto et al.
+    public function crt_style($atts = [], $content = '')
+    {
+       $content = TheContent::xarta_remove_xprotect_pre_tags($content);
+       $numLetters = $atts['length'];
+       //$numLetters = mb_strlen($content,'UTF-8');
+
+       
+       $output = 
+        '<div class="workspace">'.
+            '<div class="faux-terminal-content"><div class="faux-terminal-content-action-bit">'.
+            $content.
+            '&nbsp;<span style="-webkit-animation: typing 6s steps('.$numLetters.', end) infinite alternate, blink-caret 1s step-end infinite; animation: typing 6s steps('.$numLetters.', end) infinite alternate, blink-caret 1s step-end infinite;">&nbsp;</span>'.
+            '</div></div>'.
+            '<div class="faux-terminal"><div class="layer"></div><div class="overlay"></div></div>'.
+        '</div>';
+        
         return $output;
     }
 }
