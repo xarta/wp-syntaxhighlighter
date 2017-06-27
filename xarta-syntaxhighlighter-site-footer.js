@@ -218,6 +218,14 @@ jQuery(document).ready(function($) {
         // this will also change the labels of the buttons if required
         // (codeButtonLabelChange was passed to renderCodeButtons to include in closure)
 
+        /**
+         * TODO: This way of detecting menutab or code-extracts container is SILLY
+         *       Need to look at using DOM parents for current syntaxhighlighter instance thingy
+         *       REMEMBER: do twice ... shrinking and expanding code!  
+         *       AS-IS ... if I use both a menutab and/or a code-extracts div and/or just in 
+         *      .entry-content div then I'm going to have a problem.
+         */
+
         $("a"+xartaInstanceID+".shrink-code").on( "click", function() 
         {
             var probableContainerForPercentCalcs; // using WordPress menutab plugin sometimes
@@ -227,6 +235,12 @@ jQuery(document).ready(function($) {
                 clog("Ok: seem to be in a menutab", 1);
                 probableContainerForPercentCalcs = ".tabcontents";
                 // so that new width % doesn't end-up less than current width %    
+            }
+            else if($(".code-extracts").length)
+            {
+                clog("Ok: seem to be in a code-extracts div", 1);
+                probableContainerForPercentCalcs = ".code-extracts";
+                // so that new width % doesn't end-up less than current width % 
             }
             else
             {
@@ -260,6 +274,12 @@ jQuery(document).ready(function($) {
                 clog("Ok: seem to be in a menutab",1);
                 probableContainerForPercentCalcs = ".tabcontents";
                 // so that new width % doesn't end-up less than current width %    
+            }
+            else if($(".code-extracts").length)
+            {
+                clog("Ok: seem to be in a code-extracts div", 1);
+                probableContainerForPercentCalcs = ".code-extracts";
+                // so that new width % doesn't end-up less than current width % 
             }
             else
             {
