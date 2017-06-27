@@ -226,10 +226,21 @@ jQuery(document).ready(function($) {
          *      .entry-content div then I'm going to have a problem.
          */
 
+        /* working on alternative way of selecting ancestor I'm interested in */
+        // FOR TESTING:
+        //$(".xarta-code-buttons"+xartaInstanceID).css("border", "2px solid red");
+        //$(".xarta-code-buttons"+xartaInstanceID).closest(".tabcontents, .code-extracts, .entry-content").css("border", "2px solid red");
+
+
+        
+
         $("a"+xartaInstanceID+".shrink-code").on( "click", function() 
         {
             var probableContainerForPercentCalcs; // using WordPress menutab plugin sometimes
-
+            probableContainerForPercentCalcs = $(".xarta-code-buttons"+xartaInstanceID).closest(".tabcontents, .code-extracts, .entry-content");
+            
+            // REMOVING NOW I'M USING JQUERY CLOSEST
+            /*
             if($(".tabcontents").length)
             {
                 clog("Ok: seem to be in a menutab", 1);
@@ -247,7 +258,7 @@ jQuery(document).ready(function($) {
                 // .entry-content class particular to this WordPress theme (maybe) TODO CHECK?
                 probableContainerForPercentCalcs = ".entry-content";    
             }
-
+            */
             var curContainerWidthPx = parseInt($(probableContainerForPercentCalcs).width());
             //var curWinWidthPx = parseInt($(window).width()+"px");
 
@@ -268,7 +279,10 @@ jQuery(document).ready(function($) {
         $("a"+xartaInstanceID+".inflate-code").on( "click", function() 
         {
             var probableContainerForPercentCalcs;
-
+            probableContainerForPercentCalcs = $(".xarta-code-buttons"+xartaInstanceID).closest(".tabcontents, .code-extracts, .entry-content");
+            
+            // REMOVING NOW I'M USING JQUERY CLOSEST
+            /*
             if($(".tabcontents").length)
             {
                 clog("Ok: seem to be in a menutab",1);
@@ -285,7 +299,7 @@ jQuery(document).ready(function($) {
             {
                 probableContainerForPercentCalcs = ".entry-content";    
             }
-
+            */
             var curContainerWidthPx = parseInt($(probableContainerForPercentCalcs).width());
             clog("curContainerWidthPx: "+curContainerWidthPx,1);
             //var curWinWidthPx = parseInt($(window).width()+"px");
