@@ -741,18 +741,20 @@ class TheContent
         //                xprotect class <pre>, and identifiable </pre> here with ''
 
         
-        if (strpos($code_content, "</p>\n<pre class=\"xprotect\">") !== FALSE)
-        {
+        // THIS ISN'T QUITE RIGHT ... SO JUST MAKING AGGRESSIVE AT THE MOMENT
+        // - EVEN THOUGH MEANS UNNECCESARILY HEAVY COMPUTATIONS MANY TIMES
+        //if (strpos($code_content, "</p>\n<pre class=\"xprotect\">") !== FALSE)
+        //{
             // wpautop() on:
             $code_content = str_replace("</p>\n<pre class=\"xprotect\">", '',   $code_content);
             $code_content = str_replace("</pre>\n<p><!-- end xprotect -->", '', $code_content);
-        }
-        else
-        {
+        //}
+        //else
+        //{
             // wpautop() off:
             $code_content = str_replace("<pre class=\"xprotect\">", '',     $code_content);
             $code_content = str_replace("</pre><!-- end xprotect -->", '',  $code_content);
-        }
+        //}
 
         //$code_content = str_replace('<p></p>', '',  $code_content);
 
