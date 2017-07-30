@@ -170,18 +170,18 @@ class Enqueue
         $x_syntax_theme_css_ver =   date("ymd-Gis", filemtime( plugin_dir_path( __FILE__ ) . 
                                                     'xarta-syntaxhighlighter-site-footer.css' ));
             
-        // REGISTER:
+        // REGISTER:  $handle, $src, $deps, $ver, $ln_footer
         wp_register_script( 'xarta_global_js', 
             plugins_url( 'xarta-global-functions.js', __FILE__ ), 
             array(), $xarta_global_js_ver );
         
         wp_register_script('xarta_syntaxhighlighter_site_footer', 
             plugins_url('xarta-syntaxhighlighter-site-footer.js', __FILE__ ), 
-            array('syntaxhighlighter'), true );
+            array('jquery', 'syntaxhighlighter'), true );
 
         wp_register_script('syntaxhighlighter', 
             plugins_url( 'syntaxhighlighter.js', __FILE__ ), 
-            array('xarta_global_js'));
+            array('jquery', 'xarta_global_js'));
 
         wp_register_style( 'syntaxhighlighter_css',    
             plugins_url( 'theme.css',    __FILE__ ), 
