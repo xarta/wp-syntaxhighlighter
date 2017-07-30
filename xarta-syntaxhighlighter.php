@@ -683,7 +683,9 @@ class TheContent
             
             array_push($this->xartaCodesToCheck, "gedit");      // also protect this styling shortcode
 
-            array_push($this->xartaCodesToCheck, "crt");      // also protect this styling shortcode
+            array_push($this->xartaCodesToCheck, "crt");        // also protect this styling shortcode
+
+            array_push($this->xartaCodesToCheck, "dos");        // also protect this styling shortcode
 
             foreach ($this->xartaCodesToCheck as $searchLang)
             {
@@ -798,6 +800,7 @@ class Shortcodes
         add_shortcode('repolist',               array($this, 'get_github_repos'));
         add_shortcode('gedit',                  array($this, 'gedit_style'));
         add_shortcode('crt',                    array($this, 'crt_style'));
+        add_shortcode('crt',                    array($this, 'dos_style'));
 
         foreach ($this->xartaLangs as $searchLang)
         {
@@ -1023,6 +1026,15 @@ class Shortcodes
     {
         $output = '<div class="gedit"><div class="gedit-top">'.$atts['title'].'<div class="gedit-top-right"></div></div>'.
             '<div class="gedit-content"><pre>'.TheContent::xarta_remove_xprotect_pre_tags($content).'</pre></div></div>';
+
+        return $output;
+    }
+
+    // copying and pasting the gedit solution, but changing for a dos style
+    public function dos_style($atts = [], $content = '')
+    {
+        $output = '<div class="dos"><div class="dos-top">'.$atts['title'].'<div class="dos-top-right"></div></div>'.
+            '<div class="dos-content"><pre>'.TheContent::xarta_remove_xprotect_pre_tags($content).'</pre></div></div>';
 
         return $output;
     }
